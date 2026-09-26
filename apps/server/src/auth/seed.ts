@@ -23,7 +23,7 @@ if (import.meta.main) {
   const { SEED_EMAIL, SEED_PASSWORD, DATABASE_URL } = process.env
   if (!SEED_EMAIL || !SEED_PASSWORD) throw new Error('Set SEED_EMAIL and SEED_PASSWORD')
   const { createAuth } = await import('./auth.js')
-  const { createDb } = await import('./db.js')
+  const { createDb } = await import('../db.js')
   const db = await createDb(DATABASE_URL ?? 'file:watcher.db')
   console.log(`Account ${await seed(createAuth(db), SEED_EMAIL, SEED_PASSWORD)}: ${SEED_EMAIL}`)
 }

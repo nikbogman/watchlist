@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import { migrate } from 'drizzle-orm/libsql/migrator'
-import * as schema from './schema.js'
+import * as schema from './schema/index.js'
 
 export async function createDb(url: string) {
   const db = drizzle(createClient({ url }), { schema })

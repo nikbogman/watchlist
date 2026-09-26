@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
 import { createDb } from './db.js'
-import { createTmdbClient } from './tmdb.js'
+import { createTmdbClient } from './tmdb/tmdb.js'
 
 if (!process.env.TMDB_API_KEY) throw new Error('Set TMDB_API_KEY')
 

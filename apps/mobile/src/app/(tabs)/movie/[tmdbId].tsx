@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
-import type { Status } from 'server/src/collection'
+import type { Status } from 'server/src/collection/collection'
 
 import { api, parseResponse } from '@/api'
 import { Poster } from '@/components/movie-row'

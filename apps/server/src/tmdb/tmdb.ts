@@ -1,4 +1,4 @@
-import type { Movie, MovieDetails } from './movies.js'
+import type { Movie, MovieDetails } from '../movies/movies.js'
 
 const API = 'https://api.themoviedb.org/3'
 

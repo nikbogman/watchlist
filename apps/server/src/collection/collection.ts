@@ -1,8 +1,8 @@
 import { desc, eq } from 'drizzle-orm'
-import type { Db } from './db.js'
-import { toRow } from './movies.js'
-import { collectionEntry } from './schema.js'
-import { orUnreachable, UNREACHABLE, type Tmdb } from './tmdb.js'
+import type { Db } from '../db.js'
+import { toRow } from '../movies/movies.js'
+import { collectionEntry } from '../schema/index.js'
+import { orUnreachable, UNREACHABLE, type Tmdb } from '../tmdb/tmdb.js'
 
 export const STATUSES = collectionEntry.status.enumValues
 export type Status = (typeof STATUSES)[number]
@@ -56,3 +56,5 @@ export function createCollection(db: Db, tmdb: Tmdb) {
     },
   }
 }
+
+export type Collection = ReturnType<typeof createCollection>
