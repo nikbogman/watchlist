@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Path } from 'react-native-svg'
+import Svg, { Circle, Path } from 'react-native-svg'
+import type { Button } from 'server/src/tracking'
 
 import { api, parseResponse } from '@/api'
 import { Poster } from '@/components/movie-row'
@@ -14,6 +16,15 @@ export default function Movie() {
   const movie = useQuery({
     queryKey: ['movie', tmdbId],
     queryFn: () => parseResponse(api.api.movies[':tmdbId'].$get({ param: { tmdbId } })),
+  })
+  const queryClient = useQueryClient()
+  const press = useMutation({
+    mutationFn: (button: Button) => parseResponse(api.api.movies[':tmdbId'].press.$post({ param: { tmdbId }, json: { button } })),
+    onSuccess: (state) => {
+      queryClient.setQueryData(['movie', tmdbId], (old: typeof movie.data) => old && { ...old, ...state })
+      queryClient.invalidateQueries({ queryKey: ['lists'] })
+    },
+    onError: () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.'),
   })
 
   return (
@@ -44,12 +55,52 @@ export default function Movie() {
                 {movie.data.title}
               </Text>
               {movie.data.year !== null && <Text style={styles.year}>{movie.data.year}</Text>}
+              <Text style={[styles.status, movie.data.status && { color: colors.accent }]}>
+                {movie.data.status === 'to_watch'
+                  ? 'On To watch'
+                  : movie.data.watchedAt
+                    ? `Watched on ${new Date(movie.data.watchedAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : 'Not in your lists'}
+              </Text>
             </View>
           </View>
           {!!movie.data.overview && <Text style={styles.overview}>{movie.data.overview}</Text>}
         </ScrollView>
       )}
+      {movie.isSuccess && (
+        <View style={styles.buttons} accessibilityLabel="Track this movie">
+          <TrackButton label="To watch" on={movie.data.status === 'to_watch'} disabled={press.isPending} onPress={() => press.mutate('to_watch')}>
+            <Path d="M6 4h12v17l-6-4-6 4z" />
+          </TrackButton>
+          <TrackButton label="Watched" on={movie.data.status === 'watched'} disabled={press.isPending} onPress={() => press.mutate('watched')}>
+            <Circle cx={12} cy={12} r={9} />
+            <Path d="M8 12.5l2.5 2.5L16 9.5" />
+          </TrackButton>
+          <TrackButton label="Favourite" on={movie.data.favourite} disabled={press.isPending} onPress={() => press.mutate('favourite')}>
+            <Path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
+          </TrackButton>
+        </View>
+      )}
     </View>
+  )
+}
+
+type TrackButtonProps = { label: string; on: boolean; disabled: boolean; onPress: () => void; children: ReactNode }
+
+function TrackButton({ label, on, disabled, onPress, children }: TrackButtonProps) {
+  const fg = on ? colors.background : colors.text
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.button, on && styles.buttonOn, (pressed || disabled) && { opacity: 0.6 }]}
+      onPress={onPress}
+      disabled={disabled}
+      accessibilityRole="togglebutton"
+      accessibilityState={{ checked: on, disabled }}>
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={fg} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        {children}
+      </Svg>
+      <Text style={[styles.buttonText, { color: fg }]}>{label}</Text>
+    </Pressable>
   )
 }
 
@@ -67,5 +118,19 @@ const styles = StyleSheet.create({
   heading: { flex: 1, gap: 6, paddingBottom: 4 },
   title: { fontFamily: fonts.title, fontSize: 30, lineHeight: 33, color: colors.text },
   year: { fontFamily: fonts.regular, fontSize: 15, color: colors.muted },
+  status: { fontFamily: fonts.semibold, fontSize: 13, color: colors.muted },
+  buttons: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 },
+  button: {
+    flex: 1,
+    height: 64,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.buttonBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  buttonOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  buttonText: { fontFamily: fonts.semibold, fontSize: 13 },
   overview: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 23, color: '#D6CFC2' },
 })
