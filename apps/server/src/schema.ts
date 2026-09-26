@@ -106,7 +106,7 @@ export const accountRelations = relations(account, ({ one }) => ({
   }),
 }));
 
-// The button table's invariants, enforced by the database too.
+// The toggle rules' invariants, enforced by the database too.
 export const trackedMovies = sqliteTable(
   "tracked_movies",
   {

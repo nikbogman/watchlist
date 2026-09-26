@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
-import type { Button } from 'server/src/tracking'
+import type { Status } from 'server/src/collection'
 
 import { api, parseResponse } from '@/api'
 import { Poster } from '@/components/movie-row'
@@ -18,14 +18,18 @@ export default function Movie() {
     queryFn: () => parseResponse(api.api.movies[':tmdbId'].$get({ param: { tmdbId } })),
   })
   const queryClient = useQueryClient()
-  const press = useMutation({
-    mutationFn: (button: Button) => parseResponse(api.api.movies[':tmdbId'].press.$post({ param: { tmdbId }, json: { button } })),
+  const entry = api.api.collection[':tmdbId']
+  // One mutation for all three buttons, so they're all disabled while any toggle is saving.
+  const toggle = useMutation({
+    mutationFn: (request: () => ReturnType<typeof entry.status.$post> | ReturnType<typeof entry.favourite.$post>) => parseResponse(request()),
     onSuccess: (state) => {
       queryClient.setQueryData(['movie', tmdbId], (old: typeof movie.data) => old && { ...old, ...state })
-      queryClient.invalidateQueries({ queryKey: ['lists'] })
+      queryClient.invalidateQueries({ queryKey: ['collection'] })
     },
     onError: () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.'),
   })
+  const toggleStatus = (status: Status) => toggle.mutate(() => entry.status.$post({ param: { tmdbId }, json: { status } }))
+  const toggleFavourite = () => toggle.mutate(() => entry.favourite.$post({ param: { tmdbId } }))
 
   return (
     <View style={styles.screen}>
@@ -69,14 +73,14 @@ export default function Movie() {
       )}
       {movie.isSuccess && (
         <View style={styles.buttons} accessibilityLabel="Track this movie">
-          <TrackButton label="To watch" on={movie.data.status === 'to_watch'} disabled={press.isPending} onPress={() => press.mutate('to_watch')}>
+          <TrackButton label="To watch" on={movie.data.status === 'to_watch'} disabled={toggle.isPending} onPress={() => toggleStatus('to_watch')}>
             <Path d="M6 4h12v17l-6-4-6 4z" />
           </TrackButton>
-          <TrackButton label="Watched" on={movie.data.status === 'watched'} disabled={press.isPending} onPress={() => press.mutate('watched')}>
+          <TrackButton label="Watched" on={movie.data.status === 'watched'} disabled={toggle.isPending} onPress={() => toggleStatus('watched')}>
             <Circle cx={12} cy={12} r={9} />
             <Path d="M8 12.5l2.5 2.5L16 9.5" />
           </TrackButton>
-          <TrackButton label="Favourite" on={movie.data.favourite} disabled={press.isPending} onPress={() => press.mutate('favourite')}>
+          <TrackButton label="Favourite" on={movie.data.favourite} disabled={toggle.isPending} onPress={toggleFavourite}>
             <Path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
           </TrackButton>
         </View>

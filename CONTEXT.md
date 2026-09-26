@@ -10,6 +10,10 @@ A film as described by The Movie Database (TMDB).
 **Tracked movie**
 A movie I have added to my collection. Every tracked movie has exactly one Status. Untracking a movie takes it out of the collection entirely.
 
+**Collection**
+Every tracked movie. To watch and Watched are the collection filtered by Status; Favourites is it filtered by Favourite.
+_Avoid:_ tracking, library
+
 **Untrack**
 Take a tracked movie out of the collection. Its Status, Watched date and Favourite are lost.
 _Avoid:_ remove, delete

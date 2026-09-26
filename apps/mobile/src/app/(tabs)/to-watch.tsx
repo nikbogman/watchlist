@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ActivityIndicator, FlatList, StyleSheet, Text } from 'react-native'
 
-import type { ListName } from 'server/src/tracking'
+import type { Status } from 'server/src/collection'
 
 import { api, parseResponse } from '@/api'
 import { EmptyList } from '@/components/empty-list'
@@ -9,12 +9,12 @@ import { MovieRow } from '@/components/movie-row'
 import { ScreenHeader } from '@/components/screen-header'
 import { colors, fonts } from '@/theme'
 
-const list: ListName = 'to-watch'
+const status: Status = 'to_watch'
 
 export default function ToWatch() {
   const toWatch = useQuery({
-    queryKey: ['lists', list],
-    queryFn: () => parseResponse(api.api.lists[':list'].$get({ param: { list } })),
+    queryKey: ['collection', status],
+    queryFn: () => parseResponse(api.api.collection.$get({ query: { status } })),
   })
 
   return (
