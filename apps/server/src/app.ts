@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
+import { validator } from 'hono/validator'
 import { createAuth } from './auth.js'
 import type { Db } from './db.js'
+import type { Tmdb } from './tmdb.js'
 
-export function createApp(db: Db) {
+export function createApp(db: Db, tmdb: Tmdb) {
   const auth = createAuth(db)
   const app = new Hono()
 
@@ -15,4 +17,29 @@ export function createApp(db: Db) {
   })
 
   return app
+    .get(
+      '/api/search',
+      validator('query', (v, c) => {
+        const q = typeof v.q === 'string' ? v.q.trim() : ''
+        return q ? { q } : c.json({ error: 'q is required' }, 400)
+      }),
+      async (c) => {
+        const results = await tmdb.search(c.req.valid('query').q).catch(() => null)
+        return results ? c.json(results) : c.json({ error: 'TMDB is unreachable' }, 502)
+      },
+    )
+    .get(
+      '/api/movies/:tmdbId',
+      validator('param', (v, c) => {
+        const tmdbId = Number(v.tmdbId)
+        return Number.isInteger(tmdbId) && tmdbId > 0 ? { tmdbId } : c.json({ error: 'tmdbId must be a positive integer' }, 400)
+      }),
+      async (c) => {
+        const movie = await tmdb.details(c.req.valid('param').tmdbId).catch(() => undefined)
+        if (movie === undefined) return c.json({ error: 'TMDB is unreachable' }, 502)
+        return movie ? c.json(movie) : c.json({ error: 'Movie not found' }, 404)
+      },
+    )
 }
+
+export type AppType = ReturnType<typeof createApp>

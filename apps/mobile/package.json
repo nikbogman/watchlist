@@ -7,6 +7,7 @@
     "@expo-google-fonts/fraunces": "^0.4.1",
     "@expo-google-fonts/instrument-sans": "^0.4.2",
     "@expo/ui": "~57.0.20",
+    "@tanstack/react-query": "^5.103.2",
     "better-auth": "^1.7.6",
     "expo": "~57.0.25",
     "expo-constants": "~57.0.19",
@@ -23,6 +24,7 @@
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
     "expo-web-browser": "~57.0.3",
+    "hono": "^4.13.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
@@ -36,6 +38,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "server": "workspace:*",
     "typescript": "~6.0.3"
   },
   "scripts": {

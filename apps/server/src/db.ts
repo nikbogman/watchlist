@@ -1,3 +1,5 @@
+// Lets apps/mobile typecheck this file through the hc AppType import.
+/// <reference types="node" />
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
