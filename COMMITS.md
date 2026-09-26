@@ -44,7 +44,7 @@ Leave out the scope if a commit spans both apps. Split the commit instead when t
 - Imperative mood: "add", not "added" or "adds".
 - Lowercase, and no full stop at the end.
 - 72 characters or fewer for the whole first line.
-- Use the domain terms from [CONTEXT.md](CONTEXT.md): *To watch*, *Watched*, *Favourite*, *Tracked movie*.
+- Use the domain terms from [CONTEXT.md](CONTEXT.md): *To watch*, *Watched*, *Favourite*, *Entry*, *Collection*, *Drop*.
 
 ## Body
 

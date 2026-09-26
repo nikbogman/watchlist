@@ -107,8 +107,8 @@ export const accountRelations = relations(account, ({ one }) => ({
 }));
 
 // The toggle rules' invariants, enforced by the database too.
-export const trackedMovies = sqliteTable(
-  "tracked_movies",
+export const collectionEntry = sqliteTable(
+  "collection_entry",
   {
     tmdbId: integer("tmdb_id").primaryKey(),
     title: text("title").notNull(),

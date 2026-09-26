@@ -39,7 +39,7 @@ async function collection(tmdb = fakeTmdb([heat, alien, ran])) {
 
 const ids = async (res: Response) => (await res.json()).map((m: { tmdbId: number }) => m.tmdbId)
 
-const untracked = { status: null, favourite: false, watchedAt: null }
+const notInCollection = { status: null, favourite: false, watchedAt: null }
 const toWatch = { status: 'to_watch', favourite: false, watchedAt: null }
 const watched = { status: 'watched', favourite: false, watchedAt: DAY1.toISOString() }
 const favourite = { ...watched, favourite: true }
@@ -49,14 +49,14 @@ const rules: [Toggle[], Toggle, object][] = [
   [[], 'to_watch', toWatch],
   [[], 'watched', watched],
   [[], 'favourite', favourite],
-  [['to_watch'], 'to_watch', untracked],
+  [['to_watch'], 'to_watch', notInCollection],
   [['to_watch'], 'watched', watched],
   [['to_watch'], 'favourite', favourite],
   [['watched'], 'to_watch', toWatch],
-  [['watched'], 'watched', untracked],
+  [['watched'], 'watched', notInCollection],
   [['watched'], 'favourite', favourite],
   [['favourite'], 'to_watch', toWatch],
-  [['favourite'], 'watched', untracked],
+  [['favourite'], 'watched', notInCollection],
   [['favourite'], 'favourite', watched],
 ]
 
@@ -69,8 +69,8 @@ test.each(rules)('after %j, toggling %s gives %j', async (setup, toggled, expect
   expect(await c.entry(3)).toEqual(expected)
 })
 
-test('an untracked movie is not in the collection', async () => {
-  expect(await (await collection()).entry(3)).toEqual(untracked)
+test('a movie not in the collection has an empty entry', async () => {
+  expect(await (await collection()).entry(3)).toEqual(notInCollection)
 })
 
 test('toggling Favourite keeps the Watched date', async () => {
@@ -116,7 +116,7 @@ test('a movie moved back from Watched counts as newly added', async () => {
   expect(await ids(await c.list('to_watch'))).toEqual([3, 4])
 })
 
-test('untracked movies leave To watch', async () => {
+test('dropped movies leave To watch', async () => {
   const c = await collection()
   await c.toggle(3, 'to_watch')
   await c.toggle(3, 'to_watch')
@@ -127,17 +127,17 @@ test('the collection is filtered by a known status', async () => {
   expect((await (await collection()).list('someday')).status).toBe(400)
 })
 
-test.each(['to_watch', 'favourite'] as const)('starting to track with %s returns 404 for an unknown movie', async (what) => {
+test.each(['to_watch', 'favourite'] as const)('creating an entry with %s returns 404 for an unknown movie', async (what) => {
   expect((await (await collection()).toggle(99, what)).status).toBe(404)
 })
 
-test.each(['to_watch', 'favourite'] as const)('starting to track with %s returns 502 when TMDB is down', async (what) => {
+test.each(['to_watch', 'favourite'] as const)('creating an entry with %s returns 502 when TMDB is down', async (what) => {
   const c = await collection()
   c.tmdb.down = true
   expect((await c.toggle(3, what)).status).toBe(502)
 })
 
-test('toggling a tracked movie does not need TMDB', async () => {
+test('toggling an existing entry does not need TMDB', async () => {
   const c = await collection()
   await c.toggle(3, 'to_watch')
   c.tmdb.down = true
@@ -158,7 +158,7 @@ test('collection routes need a session', async () => {
 
 test('a database failure on a toggle is a 500, not a TMDB error', async () => {
   const c = await collection()
-  await c.app.db.run(sql`drop table tracked_movies`)
+  await c.app.db.run(sql`drop table collection_entry`)
   const res = await c.toggle(3, 'to_watch')
   expect(res.status).toBe(500)
   expect(await res.json()).toEqual({ error: 'Internal error' })

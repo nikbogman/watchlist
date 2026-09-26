@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "54dea15c-1bb0-4be5-b2f9-c7c158b4856b",
+  "id": "03997fa2-add0-4ac5-bd2a-f5662c122ec6",
   "prevId": "8f1421cd-5c6d-4ceb-8d20-0b2f393d693f",
   "tables": {
     "account": {
@@ -128,6 +128,85 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "collection_entry": {
+      "name": "collection_entry",
+      "columns": {
+        "tmdb_id": {
+          "name": "tmdb_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "poster_path": {
+          "name": "poster_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "watched_at": {
+          "name": "watched_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "favourite": {
+          "name": "favourite",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "status_valid": {
+          "name": "status_valid",
+          "value": "\"collection_entry\".\"status\" in ('to_watch', 'watched')"
+        },
+        "watched_at_iff_watched": {
+          "name": "watched_at_iff_watched",
+          "value": "(\"collection_entry\".\"status\" = 'watched') = (\"collection_entry\".\"watched_at\" is not null)"
+        },
+        "favourite_implies_watched": {
+          "name": "favourite_implies_watched",
+          "value": "not \"collection_entry\".\"favourite\" or \"collection_entry\".\"status\" = 'watched'"
+        }
+      }
+    },
     "session": {
       "name": "session",
       "columns": {
@@ -223,85 +302,6 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
-    },
-    "tracked_movies": {
-      "name": "tracked_movies",
-      "columns": {
-        "tmdb_id": {
-          "name": "tmdb_id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "year": {
-          "name": "year",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "poster_path": {
-          "name": "poster_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "added_at": {
-          "name": "added_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "watched_at": {
-          "name": "watched_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "favourite": {
-          "name": "favourite",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "status_valid": {
-          "name": "status_valid",
-          "value": "\"tracked_movies\".\"status\" in ('to_watch', 'watched')"
-        },
-        "watched_at_iff_watched": {
-          "name": "watched_at_iff_watched",
-          "value": "(\"tracked_movies\".\"status\" = 'watched') = (\"tracked_movies\".\"watched_at\" is not null)"
-        },
-        "favourite_implies_watched": {
-          "name": "favourite_implies_watched",
-          "value": "not \"tracked_movies\".\"favourite\" or \"tracked_movies\".\"status\" = 'watched'"
-        }
-      }
     },
     "user": {
       "name": "user",

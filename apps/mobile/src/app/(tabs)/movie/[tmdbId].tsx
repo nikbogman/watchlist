@@ -72,26 +72,26 @@ export default function Movie() {
         </ScrollView>
       )}
       {movie.isSuccess && (
-        <View style={styles.buttons} accessibilityLabel="Track this movie">
-          <TrackButton label="To watch" on={movie.data.status === 'to_watch'} disabled={toggle.isPending} onPress={() => toggleStatus('to_watch')}>
+        <View style={styles.buttons} accessibilityLabel="Your collection">
+          <ToggleButton label="To watch" on={movie.data.status === 'to_watch'} disabled={toggle.isPending} onPress={() => toggleStatus('to_watch')}>
             <Path d="M6 4h12v17l-6-4-6 4z" />
-          </TrackButton>
-          <TrackButton label="Watched" on={movie.data.status === 'watched'} disabled={toggle.isPending} onPress={() => toggleStatus('watched')}>
+          </ToggleButton>
+          <ToggleButton label="Watched" on={movie.data.status === 'watched'} disabled={toggle.isPending} onPress={() => toggleStatus('watched')}>
             <Circle cx={12} cy={12} r={9} />
             <Path d="M8 12.5l2.5 2.5L16 9.5" />
-          </TrackButton>
-          <TrackButton label="Favourite" on={movie.data.favourite} disabled={toggle.isPending} onPress={toggleFavourite}>
+          </ToggleButton>
+          <ToggleButton label="Favourite" on={movie.data.favourite} disabled={toggle.isPending} onPress={toggleFavourite}>
             <Path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" />
-          </TrackButton>
+          </ToggleButton>
         </View>
       )}
     </View>
   )
 }
 
-type TrackButtonProps = { label: string; on: boolean; disabled: boolean; onPress: () => void; children: ReactNode }
+type ToggleButtonProps = { label: string; on: boolean; disabled: boolean; onPress: () => void; children: ReactNode }
 
-function TrackButton({ label, on, disabled, onPress, children }: TrackButtonProps) {
+function ToggleButton({ label, on, disabled, onPress, children }: ToggleButtonProps) {
   const fg = on ? colors.background : colors.text
   return (
     <Pressable

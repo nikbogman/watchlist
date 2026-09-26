@@ -3,7 +3,7 @@ import { fakeTmdb, testApp } from './test-app.js'
 
 const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg', overview: 'A heist.' }
 
-test('movie details come from TMDB with a w500 poster and the tracked state', async () => {
+test('movie details come from TMDB with a w500 poster and the entry', async () => {
   const t = await testApp(fakeTmdb([heat]))
   const res = await t.request('/api/movies/3', { cookie: await t.login() })
   expect(res.status).toBe(200)
