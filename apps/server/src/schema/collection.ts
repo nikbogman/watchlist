@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { sqliteTable, text, integer, check } from "drizzle-orm/sqlite-core";
 
-// The toggle rules' invariants, enforced by the database too.
+// The Status and Favourite rules' invariants, enforced by the database too.
 export const collectionEntry = sqliteTable(
   "collection_entry",
   {

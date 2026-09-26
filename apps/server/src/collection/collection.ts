@@ -11,16 +11,18 @@ type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'w
 
 const entryOf = (e?: Entry | null) => ({ status: e?.status ?? null, favourite: e?.favourite ?? false, watchedAt: e?.watchedAt ?? null })
 
-// The toggle rules from PRD 01. Each returns the entry's next state, or null to drop it.
+// The Status and Favourite rules from CONTEXT.md. Each returns the entry's next state, or null to drop it.
 
-function nextForStatus(current: Entry | undefined, status: Status, now: Date): Entry | null {
-  if (current?.status === status) return null
+function withStatus(current: Entry | undefined, status: Status | null, now: Date): Entry | null {
+  if (status === null) return null
+  if (current?.status === status) return current
   if (status === 'to_watch') return { status, addedAt: now, watchedAt: null, favourite: false }
   return { status, addedAt: current?.addedAt ?? now, watchedAt: now, favourite: false }
 }
 
-function nextForFavourite(current: Entry | undefined, now: Date): Entry {
-  if (current?.status === 'watched') return { ...current, favourite: !current.favourite }
+function withFavourite(current: Entry | undefined, favourite: boolean, now: Date): Entry | null {
+  if (current?.status === 'watched') return { ...current, favourite }
+  if (!favourite) return current ?? null
   // Favouriting a movie that isn't Watched marks it Watched.
   return { status: 'watched', addedAt: current?.addedAt ?? now, watchedAt: now, favourite: true }
 }
@@ -30,6 +32,7 @@ export function createCollection(db: Db, tmdb: Tmdb) {
 
   /** Stores the next state. A new entry needs TMDB, so resolves to null if TMDB doesn't know the id, or UNREACHABLE. Database errors throw. */
   async function save(tmdbId: number, current: Entry | undefined, next: Entry | null) {
+    if (next === current) return entryOf(current)
     if (!next) {
       await db.delete(collectionEntry).where(eq(collectionEntry.tmdbId, tmdbId))
     } else if (current) {
@@ -46,14 +49,15 @@ export function createCollection(db: Db, tmdb: Tmdb) {
   return {
     entry: async (tmdbId: number) => entryOf(await find(tmdbId)),
 
-    async toggleStatus(tmdbId: number, status: Status) {
+    /** Null drops the entry. */
+    async setStatus(tmdbId: number, status: Status | null) {
       const current = await find(tmdbId)
-      return save(tmdbId, current, nextForStatus(current, status, new Date()))
+      return save(tmdbId, current, withStatus(current, status, new Date()))
     },
 
-    async toggleFavourite(tmdbId: number) {
+    async setFavourite(tmdbId: number, favourite: boolean) {
       const current = await find(tmdbId)
-      return save(tmdbId, current, nextForFavourite(current, new Date()))
+      return save(tmdbId, current, withFavourite(current, favourite, new Date()))
     },
 
     async list(status: Status) {

@@ -16,24 +16,24 @@ beforeEach(() => {
 })
 afterEach(() => vi.useRealTimers())
 
-type Toggle = Status | 'favourite'
+/** A change to one movie's entry: set its Status (null drops it) or its Favourite. */
+type Change = { status: Status | null } | { favourite: boolean }
 
 async function collection(tmdb = fakeTmdb([heat, alien, ran])) {
   const t = await testApp(tmdb)
   const cookie = await t.login()
+  const put = (path: string, body: unknown, auth = cookie) =>
+    t.request(path, { method: 'PUT', cookie: auth, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
   return {
     tmdb,
-    toggle: (tmdbId: number, what: Toggle) =>
-      what === 'favourite'
-        ? t.post(`/api/collection/${tmdbId}/favourite`, {}, cookie)
-        : t.post(`/api/collection/${tmdbId}/status`, { status: what }, cookie),
+    put,
+    set: (tmdbId: number, change: Change) => put(`/api/collection/${tmdbId}/${'status' in change ? 'status' : 'favourite'}`, change),
     async entry(tmdbId: number) {
       const { status, favourite, watchedAt } = await (await t.request(`/api/movies/${tmdbId}`, { cookie })).json()
       return { status, favourite, watchedAt }
     },
     list: (status: string) => t.request(`/api/collection?status=${status}`, { cookie }),
     app: t,
-    cookie,
   }
 }
 
@@ -44,26 +44,40 @@ const toWatch = { status: 'to_watch', favourite: false, watchedAt: null }
 const watched = { status: 'watched', favourite: false, watchedAt: DAY1.toISOString() }
 const favourite = { ...watched, favourite: true }
 
-// The toggle rules: [entry reached by these toggles, toggled, expected entry]
-const rules: [Toggle[], Toggle, object][] = [
-  [[], 'to_watch', toWatch],
-  [[], 'watched', watched],
-  [[], 'favourite', favourite],
-  [['to_watch'], 'to_watch', notInCollection],
-  [['to_watch'], 'watched', watched],
-  [['to_watch'], 'favourite', favourite],
-  [['watched'], 'to_watch', toWatch],
-  [['watched'], 'watched', notInCollection],
-  [['watched'], 'favourite', favourite],
-  [['favourite'], 'to_watch', toWatch],
-  [['favourite'], 'watched', notInCollection],
-  [['favourite'], 'favourite', watched],
+const TO_WATCH = { status: 'to_watch' } as const
+const WATCHED = { status: 'watched' } as const
+const DROP = { status: null }
+const FAVOURITE = { favourite: true }
+const UNFAVOURITE = { favourite: false }
+
+// [entry reached by these changes, change, expected entry]
+const rules: [Change[], Change, object][] = [
+  [[], TO_WATCH, toWatch],
+  [[], WATCHED, watched],
+  [[], DROP, notInCollection],
+  [[], FAVOURITE, favourite],
+  [[], UNFAVOURITE, notInCollection],
+  [[TO_WATCH], TO_WATCH, toWatch],
+  [[TO_WATCH], WATCHED, watched],
+  [[TO_WATCH], DROP, notInCollection],
+  [[TO_WATCH], FAVOURITE, favourite],
+  [[TO_WATCH], UNFAVOURITE, toWatch],
+  [[WATCHED], TO_WATCH, toWatch],
+  [[WATCHED], WATCHED, watched],
+  [[WATCHED], DROP, notInCollection],
+  [[WATCHED], FAVOURITE, favourite],
+  [[WATCHED], UNFAVOURITE, watched],
+  [[FAVOURITE], TO_WATCH, toWatch],
+  [[FAVOURITE], WATCHED, favourite],
+  [[FAVOURITE], DROP, notInCollection],
+  [[FAVOURITE], FAVOURITE, favourite],
+  [[FAVOURITE], UNFAVOURITE, watched],
 ]
 
-test.each(rules)('after %j, toggling %s gives %j', async (setup, toggled, expected) => {
+test.each(rules)('after %j, setting %j gives %j', async (setup, change, expected) => {
   const c = await collection()
-  for (const s of setup) expect((await c.toggle(3, s)).status).toBe(200)
-  const res = await c.toggle(3, toggled)
+  for (const s of setup) expect((await c.set(3, s)).status).toBe(200)
+  const res = await c.set(3, change)
   expect(res.status).toBe(200)
   expect(await res.json()).toEqual(expected)
   expect(await c.entry(3)).toEqual(expected)
@@ -73,20 +87,20 @@ test('a movie not in the collection has an empty entry', async () => {
   expect(await (await collection()).entry(3)).toEqual(notInCollection)
 })
 
-test('toggling Favourite keeps the Watched date', async () => {
+test.each([WATCHED, FAVOURITE, UNFAVOURITE])('setting %j on a watched movie keeps the Watched date', async (change) => {
   const c = await collection()
-  await c.toggle(3, 'watched')
+  await c.set(3, WATCHED)
   vi.setSystemTime(DAY2)
-  await c.toggle(3, 'favourite')
-  expect(await c.entry(3)).toEqual(favourite)
+  await c.set(3, change)
+  expect((await c.entry(3)).watchedAt).toBe(DAY1.toISOString())
 })
 
 test('To watch lists To watch movies newest added first, from the stored copy', async () => {
   const c = await collection()
-  await c.toggle(3, 'to_watch')
+  await c.set(3, TO_WATCH)
   vi.setSystemTime(DAY2)
-  await c.toggle(4, 'to_watch')
-  await c.toggle(5, 'watched')
+  await c.set(4, TO_WATCH)
+  await c.set(5, WATCHED)
   c.tmdb.down = true
   const res = await c.list('to_watch')
   expect(res.status).toBe(200)
@@ -98,28 +112,28 @@ test('To watch lists To watch movies newest added first, from the stored copy', 
 
 test('Watched lists watched movies newest Watched date first', async () => {
   const c = await collection()
-  await c.toggle(3, 'to_watch')
-  await c.toggle(4, 'watched')
+  await c.set(3, TO_WATCH)
+  await c.set(4, WATCHED)
   vi.setSystemTime(DAY2)
-  await c.toggle(5, 'watched')
+  await c.set(5, WATCHED)
   vi.setSystemTime(new Date('2026-01-03T10:00:00Z'))
-  await c.toggle(3, 'watched')
+  await c.set(3, WATCHED)
   expect(await ids(await c.list('watched'))).toEqual([3, 5, 4])
 })
 
 test('a movie moved back from Watched counts as newly added', async () => {
   const c = await collection()
-  await c.toggle(3, 'watched')
-  await c.toggle(4, 'to_watch')
+  await c.set(3, WATCHED)
+  await c.set(4, TO_WATCH)
   vi.setSystemTime(DAY2)
-  await c.toggle(3, 'to_watch')
+  await c.set(3, TO_WATCH)
   expect(await ids(await c.list('to_watch'))).toEqual([3, 4])
 })
 
 test('dropped movies leave To watch', async () => {
   const c = await collection()
-  await c.toggle(3, 'to_watch')
-  await c.toggle(3, 'to_watch')
+  await c.set(3, TO_WATCH)
+  await c.set(3, DROP)
   expect(await (await c.list('to_watch')).json()).toEqual([])
 })
 
@@ -127,39 +141,49 @@ test('the collection is filtered by a known status', async () => {
   expect((await (await collection()).list('someday')).status).toBe(400)
 })
 
-test.each(['to_watch', 'favourite'] as const)('creating an entry with %s returns 404 for an unknown movie', async (what) => {
-  expect((await (await collection()).toggle(99, what)).status).toBe(404)
+test.each([TO_WATCH, FAVOURITE])('creating an entry with %j returns 404 for an unknown movie', async (change) => {
+  expect((await (await collection()).set(99, change)).status).toBe(404)
 })
 
-test.each(['to_watch', 'favourite'] as const)('creating an entry with %s returns 502 when TMDB is down', async (what) => {
+test.each([TO_WATCH, FAVOURITE])('creating an entry with %j returns 502 when TMDB is down', async (change) => {
   const c = await collection()
   c.tmdb.down = true
-  expect((await c.toggle(3, what)).status).toBe(502)
+  expect((await c.set(3, change)).status).toBe(502)
 })
 
-test('toggling an existing entry does not need TMDB', async () => {
+test('changing an existing entry does not need TMDB', async () => {
   const c = await collection()
-  await c.toggle(3, 'to_watch')
+  await c.set(3, TO_WATCH)
   c.tmdb.down = true
-  expect((await c.toggle(3, 'watched')).status).toBe(200)
+  expect((await c.set(3, WATCHED)).status).toBe(200)
 })
 
-test('toggling a status needs a known status', async () => {
+test.each([DROP, UNFAVOURITE])('setting %j on a movie not in the collection does not need TMDB', async (change) => {
   const c = await collection()
-  expect((await c.app.post('/api/collection/3/status', { status: 'favourite' }, c.cookie)).status).toBe(400)
+  c.tmdb.down = true
+  expect((await c.set(99, change)).status).toBe(200)
+})
+
+test.each([
+  ['status', { status: 'favourite' }],
+  ['status', {}],
+  ['favourite', { favourite: 'yes' }],
+  ['favourite', {}],
+])('setting %s needs a valid body, not %j', async (field, body) => {
+  expect((await (await collection()).put(`/api/collection/3/${field}`, body)).status).toBe(400)
 })
 
 test('collection routes need a session', async () => {
-  const { app: t } = await collection()
-  expect((await t.post('/api/collection/3/status', { status: 'to_watch' })).status).toBe(401)
-  expect((await t.post('/api/collection/3/favourite', {})).status).toBe(401)
-  expect((await t.request('/api/collection?status=to_watch')).status).toBe(401)
+  const c = await collection()
+  expect((await c.put('/api/collection/3/status', TO_WATCH, '')).status).toBe(401)
+  expect((await c.put('/api/collection/3/favourite', FAVOURITE, '')).status).toBe(401)
+  expect((await c.app.request('/api/collection?status=to_watch')).status).toBe(401)
 })
 
-test('a database failure on a toggle is a 500, not a TMDB error', async () => {
+test('a database failure on a change is a 500, not a TMDB error', async () => {
   const c = await collection()
   await c.app.db.run(sql`drop table collection_entry`)
-  const res = await c.toggle(3, 'to_watch')
+  const res = await c.set(3, TO_WATCH)
   expect(res.status).toBe(500)
   expect(await res.json()).toEqual({ error: 'Internal error' })
 })
