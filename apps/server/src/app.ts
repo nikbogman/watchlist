@@ -1,8 +1,10 @@
 import { Hono } from 'hono'
+import { validator } from 'hono/validator'
 import { createAuth } from './auth.js'
 import type { Db } from './db.js'
+import type { Tmdb } from './tmdb.js'
 
-export function createApp(db: Db) {
+export function createApp(db: Db, tmdb: Tmdb) {
   const auth = createAuth(db)
   const app = new Hono()
 
@@ -14,5 +16,17 @@ export function createApp(db: Db) {
     await next()
   })
 
-  return app
+  return app.get(
+    '/api/search',
+    validator('query', (v, c) => {
+      const q = typeof v.q === 'string' ? v.q.trim() : ''
+      return q ? { q } : c.json({ error: 'q is required' }, 400)
+    }),
+    async (c) => {
+      const results = await tmdb.search(c.req.valid('query').q).catch(() => null)
+      return results ? c.json(results) : c.json({ error: 'TMDB is unreachable' }, 502)
+    },
+  )
 }
+
+export type AppType = ReturnType<typeof createApp>

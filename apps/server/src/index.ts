@@ -1,8 +1,14 @@
 import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
 import { createDb } from './db.js'
+import { createTmdbClient } from './tmdb.js'
 
-const app = createApp(await createDb(process.env.DATABASE_URL ?? 'file:watcher.db'))
+if (!process.env.TMDB_API_KEY) throw new Error('Set TMDB_API_KEY')
+
+const app = createApp(
+  await createDb(process.env.DATABASE_URL ?? 'file:watcher.db'),
+  createTmdbClient(process.env.TMDB_API_KEY),
+)
 
 // 0.0.0.0 so a phone running Expo Go can reach it over the LAN.
 serve({ fetch: app.fetch, port: 3000, hostname: '0.0.0.0' }, (info) => {
