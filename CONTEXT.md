@@ -8,7 +8,11 @@ Personal app for tracking the movies I watch.
 A film as described by The Movie Database (TMDB).
 
 **Tracked movie**
-A movie I have added to my collection. Every tracked movie has exactly one Status. Untracking a movie removes it from the collection entirely.
+A movie I have added to my collection. Every tracked movie has exactly one Status. Untracking a movie takes it out of the collection entirely.
+
+**Untrack**
+Take a tracked movie out of the collection. Its Status, Watched date and Favourite are lost.
+_Avoid:_ remove, delete
 
 **Status**
 Either *To watch* or *Watched*, never both. Marking a movie *Watched* takes it off *To watch*. Unmarking *Watched* untracks the movie; it does not fall back to *To watch*. Rewatches are not tracked.
