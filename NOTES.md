@@ -4,7 +4,7 @@ An all-in-one app for watching and tracking movies in my home setup.
 
 ## Features
 
-### 1. Movie lists ([PRD](docs/prd/01-movie-lists.md))
+### 1. Movie lists ([spec](https://github.com/nikbogman/watchlist/issues/1))
 
 - As a user, I want to search movies by title and open one to see its info.
 - As a user, I want to add a movie to *To watch* so I remember to see it.
