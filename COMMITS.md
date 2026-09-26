@@ -44,7 +44,7 @@ Leave out the scope if a commit spans both apps. Split the commit instead when t
 - Imperative mood: "add", not "added" or "adds".
 - Lowercase, and no full stop at the end.
 - 72 characters or fewer for the whole first line.
-- Use the domain terms from [CONTEXT.md](CONTEXT.md): *To watch*, *Watched*, *Favourite*, *Tracked movie*.
+- Use the domain terms from [CONTEXT.md](CONTEXT.md): *To watch*, *Watched*, *Favourite*, *Entry*, *Collection*, *Drop*.
 
 ## Body
 
@@ -53,7 +53,7 @@ Optional. Explain **why** the change was made, not what changed (the diff shows 
 ## Footer
 
 - `BREAKING CHANGE: <what breaks and how to migrate>` for breaking changes. Also add `!` after the type or scope: `feat(server)!: ...`.
-- `Refs: docs/prd/01-movie-lists.md` to link the PRD the change implements.
+- `Refs: #1` to link the spec issue the change implements.
 - `Co-Authored-By:` lines for co-authors, including AI agents.
 
 ## Examples
@@ -78,7 +78,7 @@ anyone use the TMDB quota through the server.
 
 BREAKING CHANGE: clients must send a valid session with every
 request except Better Auth's own endpoints.
-Refs: docs/prd/01-movie-lists.md
+Refs: #1
 ```
 
 ## One commit, one change

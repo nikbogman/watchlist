@@ -3,13 +3,14 @@ import { createApp } from './app.js'
 import { createAuth } from './auth.js'
 import { createDb } from './db.js'
 import { seed } from './seed.js'
-import type { MovieDetails, MovieSummary, Tmdb } from './tmdb.js'
+import type { Movie, MovieDetails } from './movies.js'
+import type { Tmdb } from './tmdb.js'
 
 export const EMAIL = 'me@example.com'
 export const PASSWORD = 'correct horse battery'
 
 /** In-memory stand-in for TMDB. Set `down` to make every call throw. */
-export function fakeTmdb(movies: (MovieSummary | MovieDetails)[] = []) {
+export function fakeTmdb(movies: (Movie | MovieDetails)[] = []) {
   const fake = {
     down: false as boolean,
     async search(query: string) {
