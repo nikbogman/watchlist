@@ -2,9 +2,9 @@ import { sql } from 'drizzle-orm'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { fakeTmdb, testApp } from './test-app.js'
 
-const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg', posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg' }
-const alien = { tmdbId: 4, title: 'Alien', year: 1979, posterPath: null, posterUrl: null }
-const ran = { tmdbId: 5, title: 'Ran', year: 1985, posterPath: '/ran.jpg', posterUrl: 'https://image.tmdb.org/t/p/w500/ran.jpg' }
+const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg' }
+const alien = { tmdbId: 4, title: 'Alien', year: 1979, posterPath: null }
+const ran = { tmdbId: 5, title: 'Ran', year: 1985, posterPath: '/ran.jpg' }
 
 const DAY1 = new Date('2026-01-01T10:00:00Z')
 const DAY2 = new Date('2026-01-02T10:00:00Z')

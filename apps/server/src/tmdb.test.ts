@@ -8,7 +8,7 @@ const stubFetch = (body: unknown, status = 200) =>
   }) as unknown as typeof fetch
 stubFetch.lastUrl = ''
 
-test('search maps TMDB results, dropping adult titles', async () => {
+test('search maps TMDB results to poster paths, dropping adult titles', async () => {
   const tmdb = createTmdbClient(
     'KEY',
     stubFetch({
@@ -20,8 +20,8 @@ test('search maps TMDB results, dropping adult titles', async () => {
     }),
   )
   expect(await tmdb.search('heat')).toEqual([
-    { tmdbId: 1, title: 'Heat', year: 1995, posterUrl: 'https://image.tmdb.org/t/p/w185/heat.jpg' },
-    { tmdbId: 2, title: 'Unknown', year: null, posterUrl: null },
+    { tmdbId: 1, title: 'Heat', year: 1995, posterPath: '/heat.jpg' },
+    { tmdbId: 2, title: 'Unknown', year: null, posterPath: null },
   ])
   expect(stubFetch.lastUrl).toContain('include_adult=false')
   expect(stubFetch.lastUrl).toContain('api_key=KEY')
@@ -31,7 +31,7 @@ test('search throws when TMDB errors', async () => {
   await expect(createTmdbClient('KEY', stubFetch({}, 500)).search('heat')).rejects.toThrow()
 })
 
-test('details maps a TMDB movie with a w500 poster', async () => {
+test('details maps a TMDB movie', async () => {
   const tmdb = createTmdbClient(
     'KEY',
     stubFetch({ id: 1, title: 'Heat', release_date: '1995-12-15', poster_path: '/heat.jpg', overview: 'A heist.' }),
@@ -41,7 +41,6 @@ test('details maps a TMDB movie with a w500 poster', async () => {
     title: 'Heat',
     year: 1995,
     posterPath: '/heat.jpg',
-    posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg',
     overview: 'A heist.',
   })
   expect(stubFetch.lastUrl).toContain('/movie/1?')

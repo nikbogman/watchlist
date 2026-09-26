@@ -1,7 +1,7 @@
 import { desc, eq } from 'drizzle-orm'
 import type { Db } from './db.js'
 import { trackedMovies } from './schema.js'
-import { posterUrl, type MovieSummary, type Tmdb } from './tmdb.js'
+import { toRow, type Tmdb } from './tmdb.js'
 
 export const BUTTONS = ['to_watch', 'watched', 'favourite'] as const
 export type Button = (typeof BUTTONS)[number]
@@ -48,9 +48,9 @@ export function createTracking(db: Db, tmdb: Tmdb) {
       return stateOf(tracked ?? undefined)
     },
 
-    async toWatch(): Promise<MovieSummary[]> {
+    async toWatch() {
       const rows = await db.select().from(trackedMovies).where(eq(trackedMovies.status, 'to_watch')).orderBy(desc(trackedMovies.addedAt))
-      return rows.map((m) => ({ tmdbId: m.tmdbId, title: m.title, year: m.year, posterUrl: posterUrl(m.posterPath, 'w185') }))
+      return rows.map(toRow)
     },
   }
 }

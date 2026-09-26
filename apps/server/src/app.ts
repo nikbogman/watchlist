@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { validator } from 'hono/validator'
 import { createAuth } from './auth.js'
 import type { Db } from './db.js'
-import type { Tmdb } from './tmdb.js'
+import { toPage, toRow, type Tmdb } from './tmdb.js'
 import { BUTTONS, createTracking, type Button } from './tracking.js'
 
 export function createApp(db: Db, tmdb: Tmdb) {
@@ -30,7 +30,7 @@ export function createApp(db: Db, tmdb: Tmdb) {
       }),
       async (c) => {
         const results = await tmdb.search(c.req.valid('query').q).catch(() => null)
-        return results ? c.json(results) : c.json({ error: 'TMDB is unreachable' }, 502)
+        return results ? c.json(results.map(toRow)) : c.json({ error: 'TMDB is unreachable' }, 502)
       },
     )
     .get(
@@ -40,7 +40,7 @@ export function createApp(db: Db, tmdb: Tmdb) {
         const { tmdbId } = c.req.valid('param')
         const movie = await tmdb.details(tmdbId).catch(() => undefined)
         if (movie === undefined) return c.json({ error: 'TMDB is unreachable' }, 502)
-        return movie ? c.json({ ...movie, ...(await tracking.state(tmdbId)) }) : c.json({ error: 'Movie not found' }, 404)
+        return movie ? c.json({ ...toPage(movie), ...(await tracking.state(tmdbId)) }) : c.json({ error: 'Movie not found' }, 404)
       },
     )
     .post(
