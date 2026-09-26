@@ -2,11 +2,16 @@
   "name": "server",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file-if-exists=.env src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "seed": "tsx --env-file-if-exists=.env src/seed.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@better-auth/expo": "1.7.6",
     "@hono/node-server": "^2.1.1",
     "@libsql/client": "^0.18.0",
     "better-auth": "^1.7.6",
@@ -17,6 +22,7 @@
     "@types/node": "^26.1.1",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
   }
 }

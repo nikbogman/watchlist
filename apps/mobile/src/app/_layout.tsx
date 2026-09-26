@@ -1,18 +1,45 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Fraunces_600SemiBold } from '@expo-google-fonts/fraunces/600SemiBold'
+import { InstrumentSans_400Regular } from '@expo-google-fonts/instrument-sans/400Regular'
+import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans/500Medium'
+import { InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans/600SemiBold'
+import { useFonts } from 'expo-font'
+import { Stack } from 'expo-router'
+import * as SplashScreen from 'expo-splash-screen'
+import { StatusBar } from 'expo-status-bar'
+import { useEffect } from 'react'
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { authClient } from '@/auth-client'
+import { colors } from '@/theme'
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync()
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    Fraunces_600SemiBold,
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+  })
+  const { data: session, isPending } = authClient.useSession()
+  const ready = (fontsLoaded || !!fontError) && !isPending
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync()
+  }, [ready])
+
+  if (!ready) return null
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
-  );
+    <>
+      <StatusBar style="light" />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Protected guard={!!session}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+        <Stack.Protected guard={!session}>
+          <Stack.Screen name="login" />
+        </Stack.Protected>
+      </Stack>
+    </>
+  )
 }
