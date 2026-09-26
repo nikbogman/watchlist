@@ -30,7 +30,7 @@ export function createTracking(db: Db, tmdb: Tmdb) {
   return {
     state: async (tmdbId: number) => stateOf(await get(tmdbId)),
 
-    /** Resolves to null when tracking starts on an id TMDB doesn't know; throws when TMDB is unreachable then. */
+    /** When tracking starts, the TMDB call can fail with 'not_found' or 'tmdb_unreachable'. Database errors throw. */
     async press(tmdbId: number, button: Button) {
       const row = await get(tmdbId)
       const tracked = next(row, button, new Date())
@@ -40,8 +40,9 @@ export function createTracking(db: Db, tmdb: Tmdb) {
         await db.update(trackedMovies).set(tracked).where(eq(trackedMovies.tmdbId, tmdbId))
       } else {
         // The copy is taken once, when tracking starts, and never refreshed.
-        const movie = await tmdb.details(tmdbId)
-        if (!movie) return null
+        const movie = await tmdb.details(tmdbId).catch(() => 'tmdb_unreachable' as const)
+        if (movie === 'tmdb_unreachable') return movie
+        if (!movie) return 'not_found'
         await db.insert(trackedMovies).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...tracked })
       }
       return stateOf(tracked ?? undefined)

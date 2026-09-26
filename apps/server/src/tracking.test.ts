@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { fakeTmdb, testApp } from './test-app.js'
 
@@ -25,7 +26,7 @@ async function tracking(tmdb = fakeTmdb([heat, alien, ran])) {
       return { status, favourite, watchedAt }
     },
     toWatch: () => t.request('/api/lists/to-watch', { cookie }),
-    unauthed: t,
+    app: t,
   }
 }
 
@@ -124,7 +125,15 @@ test('press needs a known button', async () => {
 })
 
 test('tracking routes need a session', async () => {
-  const { unauthed: t } = await tracking()
+  const { app: t } = await tracking()
   expect((await t.post('/api/movies/3/press', { button: 'to_watch' })).status).toBe(401)
   expect((await t.request('/api/lists/to-watch')).status).toBe(401)
+})
+
+test('a database failure on press is a 500, not a TMDB error', async () => {
+  const tr = await tracking()
+  await tr.app.db.run(sql`drop table tracked_movies`)
+  const res = await tr.press(3, 'to_watch')
+  expect(res.status).toBe(500)
+  expect(await res.json()).toEqual({ error: 'Internal error' })
 })

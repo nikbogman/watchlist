@@ -12,6 +12,9 @@ export function createApp(db: Db, tmdb: Tmdb) {
 
   app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
+  // Database and other unexpected errors: same { error } shape as every other failure.
+  app.onError((_, c) => c.json({ error: 'Internal error' }, 500))
+
   app.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (!session) return c.json({ error: 'Unauthorized' }, 401)
@@ -47,9 +50,10 @@ export function createApp(db: Db, tmdb: Tmdb) {
         BUTTONS.includes(v?.button) ? { button: v.button as Button } : c.json({ error: `button must be one of ${BUTTONS.join(', ')}` }, 400),
       ),
       async (c) => {
-        const state = await tracking.press(c.req.valid('param').tmdbId, c.req.valid('json').button).catch(() => undefined)
-        if (state === undefined) return c.json({ error: 'TMDB is unreachable' }, 502)
-        return state ? c.json(state) : c.json({ error: 'Movie not found' }, 404)
+        const state = await tracking.press(c.req.valid('param').tmdbId, c.req.valid('json').button)
+        if (state === 'tmdb_unreachable') return c.json({ error: 'TMDB is unreachable' }, 502)
+        if (state === 'not_found') return c.json({ error: 'Movie not found' }, 404)
+        return c.json(state)
       },
     )
     .get('/api/lists/to-watch', async (c) => c.json(await tracking.toWatch()))
