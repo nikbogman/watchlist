@@ -1,0 +1,11 @@
+{
+  "name": "watcher",
+  "private": true,
+  "scripts": {
+    "mobile": "pnpm --filter mobile start",
+    "server": "pnpm --filter server dev"
+  },
+  "devDependencies": {
+    "agent-device": "^0.21.15"
+  }
+}
