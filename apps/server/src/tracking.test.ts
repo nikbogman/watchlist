@@ -137,3 +137,8 @@ test('a database failure on press is a 500, not a TMDB error', async () => {
   expect(res.status).toBe(500)
   expect(await res.json()).toEqual({ error: 'Internal error' })
 })
+
+test('an unknown list returns 404', async () => {
+  const tr = await tracking()
+  expect((await tr.app.request('/api/lists/someday', { cookie: await tr.app.login() })).status).toBe(404)
+})

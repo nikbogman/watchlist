@@ -56,7 +56,14 @@ export function createApp(db: Db, tmdb: Tmdb) {
         return c.json(state)
       },
     )
-    .get('/api/lists/to-watch', async (c) => c.json(await tracking.toWatch()))
+    .get(
+      '/api/lists/:list',
+      validator('param', (v, c) => {
+        const { list } = v
+        return tracking.isList(list) ? { list } : c.json({ error: 'Unknown list' }, 404)
+      }),
+      async (c) => c.json(await tracking.list(c.req.valid('param').list)),
+    )
 }
 
 const tmdbIdParam = validator('param', (v, c) => {

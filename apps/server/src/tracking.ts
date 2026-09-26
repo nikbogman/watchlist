@@ -1,10 +1,17 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, type SQL } from 'drizzle-orm'
 import type { Db } from './db.js'
 import { trackedMovies } from './schema.js'
 import { toRow, type Tmdb } from './tmdb.js'
 
 export const BUTTONS = ['to_watch', 'watched', 'favourite'] as const
 export type Button = (typeof BUTTONS)[number]
+
+// Each list is a filter and an order over the tracked movies.
+const LISTS = {
+  'to-watch': { where: eq(trackedMovies.status, 'to_watch'), orderBy: desc(trackedMovies.addedAt) },
+} satisfies Record<string, { where: SQL; orderBy: SQL }>
+
+export type ListName = keyof typeof LISTS
 
 type Row = typeof trackedMovies.$inferSelect
 type Tracked = Pick<Row, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
@@ -48,9 +55,11 @@ export function createTracking(db: Db, tmdb: Tmdb) {
       return stateOf(tracked ?? undefined)
     },
 
-    async toWatch() {
-      const rows = await db.select().from(trackedMovies).where(eq(trackedMovies.status, 'to_watch')).orderBy(desc(trackedMovies.addedAt))
-      return rows.map(toRow)
+    isList: (name: string): name is ListName => Object.hasOwn(LISTS, name),
+
+    async list(name: ListName) {
+      const { where, orderBy } = LISTS[name]
+      return (await db.select().from(trackedMovies).where(where).orderBy(orderBy)).map(toRow)
     },
   }
 }
