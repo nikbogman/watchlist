@@ -15,7 +15,9 @@ function Icon({ color, children }: { color: ColorValue; children: ReactNode }) {
 
 export default function TabsLayout() {
   return (
+    // History, so back from the movie page returns to the tab it was opened from.
     <Tabs
+      backBehavior="history"
       screenOptions={{
         headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
@@ -70,6 +72,8 @@ export default function TabsLayout() {
           ),
         }}
       />
+      {/* Inside the tabs, not the root stack, so the tab bar stays visible on it. */}
+      <Tabs.Screen name="movie/[tmdbId]" options={{ href: null }} />
     </Tabs>
   )
 }
