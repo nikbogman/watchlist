@@ -48,25 +48,57 @@ export function createCollection(db: Db, tmdb: Tmdb) {
 
     /** Null drops the entry. */
     async setStatus(tmdbId: number, status: Status | null) {
-      if (status === null) return drop(tmdbId)
+      if (status === null) {
+        return drop(tmdbId)
+      }
+
       const current = await find(tmdbId)
-      if (current?.status === status) return entryOf(current)
-      const next = status === 'to_watch' ? toWatch(new Date()) : watched(current, new Date())
-      return current ? update(tmdbId, next) : create(tmdbId, next)
+      if (current?.status === status) {
+        return entryOf(current)
+      }
+
+      let next: Entry
+      if (status === 'to_watch') {
+        next = toWatch(new Date())
+      } else {
+        next = watched(current, new Date())
+      }
+
+      if (current) {
+        return update(tmdbId, next)
+      }
+      return create(tmdbId, next)
     },
 
     async setFavourite(tmdbId: number, favourite: boolean) {
       const current = await find(tmdbId)
-      if (current?.status === 'watched') return update(tmdbId, { ...current, favourite })
-      if (!favourite) return entryOf(current)
+      if (current?.status === 'watched') {
+        return update(tmdbId, { ...current, favourite })
+      }
+
+      // Not Watched, so there is no Favourite to clear.
+      if (!favourite) {
+        return entryOf(current)
+      }
+
       // Favouriting a movie that isn't Watched marks it Watched.
       const next = watched(current, new Date(), true)
-      return current ? update(tmdbId, next) : create(tmdbId, next)
+      if (current) {
+        return update(tmdbId, next)
+      }
+      return create(tmdbId, next)
     },
 
     async list(status: Status) {
-      const newestFirst = desc(status === 'to_watch' ? collectionEntry.addedAt : collectionEntry.watchedAt)
-      return (await db.select().from(collectionEntry).where(eq(collectionEntry.status, status)).orderBy(newestFirst)).map(toRow)
+      let newestFirst
+      if (status === 'to_watch') {
+        newestFirst = desc(collectionEntry.addedAt)
+      } else {
+        newestFirst = desc(collectionEntry.watchedAt)
+      }
+
+      const entries = await db.select().from(collectionEntry).where(eq(collectionEntry.status, status)).orderBy(newestFirst)
+      return entries.map(toRow)
     },
   }
 }
