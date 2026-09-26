@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import { validator } from 'hono/validator'
 import { createAuth } from './auth.js'
 import type { Db } from './db.js'
-import { toPage, toRow, type Tmdb } from './tmdb.js'
+import { orUnreachable, toPage, toRow, UNREACHABLE, type Tmdb } from './tmdb.js'
 import { BUTTONS, createTracking, type Button } from './tracking.js'
 
 export function createApp(db: Db, tmdb: Tmdb) {
@@ -29,8 +29,9 @@ export function createApp(db: Db, tmdb: Tmdb) {
         return q ? { q } : c.json({ error: 'q is required' }, 400)
       }),
       async (c) => {
-        const results = await tmdb.search(c.req.valid('query').q).catch(() => null)
-        return results ? c.json(results.map(toRow)) : c.json({ error: 'TMDB is unreachable' }, 502)
+        const results = await orUnreachable(tmdb.search(c.req.valid('query').q))
+        if (results === UNREACHABLE) return c.json({ error: 'TMDB is unreachable' }, 502)
+        return c.json(results.map(toRow))
       },
     )
     .get(
@@ -38,9 +39,10 @@ export function createApp(db: Db, tmdb: Tmdb) {
       tmdbIdParam,
       async (c) => {
         const { tmdbId } = c.req.valid('param')
-        const movie = await tmdb.details(tmdbId).catch(() => undefined)
-        if (movie === undefined) return c.json({ error: 'TMDB is unreachable' }, 502)
-        return movie ? c.json({ ...toPage(movie), ...(await tracking.state(tmdbId)) }) : c.json({ error: 'Movie not found' }, 404)
+        const movie = await orUnreachable(tmdb.details(tmdbId))
+        if (movie === UNREACHABLE) return c.json({ error: 'TMDB is unreachable' }, 502)
+        if (!movie) return c.json({ error: 'Movie not found' }, 404)
+        return c.json({ ...toPage(movie), ...(await tracking.state(tmdbId)) })
       },
     )
     .post(
@@ -51,8 +53,8 @@ export function createApp(db: Db, tmdb: Tmdb) {
       ),
       async (c) => {
         const state = await tracking.press(c.req.valid('param').tmdbId, c.req.valid('json').button)
-        if (state === 'tmdb_unreachable') return c.json({ error: 'TMDB is unreachable' }, 502)
-        if (state === 'not_found') return c.json({ error: 'Movie not found' }, 404)
+        if (state === UNREACHABLE) return c.json({ error: 'TMDB is unreachable' }, 502)
+        if (!state) return c.json({ error: 'Movie not found' }, 404)
         return c.json(state)
       },
     )

@@ -1,7 +1,7 @@
 import { desc, eq, type SQL } from 'drizzle-orm'
 import type { Db } from './db.js'
 import { trackedMovies } from './schema.js'
-import { toRow, type Tmdb } from './tmdb.js'
+import { orUnreachable, toRow, UNREACHABLE, type Tmdb } from './tmdb.js'
 
 export const BUTTONS = ['to_watch', 'watched', 'favourite'] as const
 export type Button = (typeof BUTTONS)[number]
@@ -37,7 +37,7 @@ export function createTracking(db: Db, tmdb: Tmdb) {
   return {
     state: async (tmdbId: number) => stateOf(await get(tmdbId)),
 
-    /** When tracking starts, the TMDB call can fail with 'not_found' or 'tmdb_unreachable'. Database errors throw. */
+    /** When tracking starts, resolves to null if TMDB doesn't know the id, or UNREACHABLE. Database errors throw. */
     async press(tmdbId: number, button: Button) {
       const row = await get(tmdbId)
       const tracked = next(row, button, new Date())
@@ -47,9 +47,8 @@ export function createTracking(db: Db, tmdb: Tmdb) {
         await db.update(trackedMovies).set(tracked).where(eq(trackedMovies.tmdbId, tmdbId))
       } else {
         // The copy is taken once, when tracking starts, and never refreshed.
-        const movie = await tmdb.details(tmdbId).catch(() => 'tmdb_unreachable' as const)
-        if (movie === 'tmdb_unreachable') return movie
-        if (!movie) return 'not_found'
+        const movie = await orUnreachable(tmdb.details(tmdbId))
+        if (movie === UNREACHABLE || !movie) return movie
         await db.insert(trackedMovies).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...tracked })
       }
       return stateOf(tracked ?? undefined)

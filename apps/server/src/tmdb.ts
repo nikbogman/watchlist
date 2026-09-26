@@ -9,6 +9,11 @@ export type MovieDetails = Movie & { overview: string }
 /** A list or search row as the app receives it. */
 export type MovieSummary = { tmdbId: number; title: string; year: number | null; posterUrl: string | null }
 
+/** What a TMDB call resolves to when TMDB can't be reached. A symbol, so it can't be mistaken for data. */
+export const UNREACHABLE = Symbol('TMDB unreachable')
+
+export const orUnreachable = <T>(call: Promise<T>) => call.catch((): typeof UNREACHABLE => UNREACHABLE)
+
 export type Tmdb = {
   search(query: string): Promise<Movie[]>
   /** Resolves to null when TMDB doesn't know the id. */
