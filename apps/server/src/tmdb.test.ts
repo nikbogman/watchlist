@@ -30,3 +30,26 @@ test('search maps TMDB results, dropping adult titles', async () => {
 test('search throws when TMDB errors', async () => {
   await expect(createTmdbClient('KEY', stubFetch({}, 500)).search('heat')).rejects.toThrow()
 })
+
+test('details maps a TMDB movie with a w500 poster', async () => {
+  const tmdb = createTmdbClient(
+    'KEY',
+    stubFetch({ id: 1, title: 'Heat', release_date: '1995-12-15', poster_path: '/heat.jpg', overview: 'A heist.' }),
+  )
+  expect(await tmdb.details(1)).toEqual({
+    tmdbId: 1,
+    title: 'Heat',
+    year: 1995,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg',
+    overview: 'A heist.',
+  })
+  expect(stubFetch.lastUrl).toContain('/movie/1?')
+})
+
+test('details returns null for an id TMDB does not know', async () => {
+  expect(await createTmdbClient('KEY', stubFetch({}, 404)).details(1)).toBeNull()
+})
+
+test('details throws when TMDB errors', async () => {
+  await expect(createTmdbClient('KEY', stubFetch({}, 500)).details(1)).rejects.toThrow()
+})

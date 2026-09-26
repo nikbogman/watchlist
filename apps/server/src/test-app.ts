@@ -3,18 +3,23 @@ import { createApp } from './app.js'
 import { createAuth } from './auth.js'
 import { createDb } from './db.js'
 import { seed } from './seed.js'
-import type { MovieSummary, Tmdb } from './tmdb.js'
+import type { MovieDetails, MovieSummary, Tmdb } from './tmdb.js'
 
 export const EMAIL = 'me@example.com'
 export const PASSWORD = 'correct horse battery'
 
 /** In-memory stand-in for TMDB. Set `down` to make every call throw. */
-export function fakeTmdb(movies: MovieSummary[] = []) {
+export function fakeTmdb(movies: (MovieSummary | MovieDetails)[] = []) {
   const fake = {
     down: false as boolean,
     async search(query: string) {
       if (fake.down) throw new Error('TMDB down')
       return movies.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
+    },
+    async details(tmdbId: number) {
+      if (fake.down) throw new Error('TMDB down')
+      const m = movies.find((m) => m.tmdbId === tmdbId)
+      return m ? { overview: '', ...m } : null
     },
   } satisfies Tmdb & { down: boolean }
   return fake
