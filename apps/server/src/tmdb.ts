@@ -3,7 +3,7 @@ const IMAGES = 'https://image.tmdb.org/t/p'
 
 export type MovieSummary = { tmdbId: number; title: string; year: number | null; posterUrl: string | null }
 
-export type MovieDetails = MovieSummary & { overview: string }
+export type MovieDetails = MovieSummary & { overview: string; posterPath: string | null }
 
 export type Tmdb = {
   search(query: string): Promise<MovieSummary[]>
@@ -36,7 +36,7 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch):
     async details(tmdbId) {
       const m = await get<TmdbMovie>(`/movie/${tmdbId}`)
       if (!m) return null
-      return { tmdbId: m.id, title: m.title, year: yearOf(m.release_date), posterUrl: posterUrl(m.poster_path, 'w500'), overview: m.overview ?? '' }
+      return { tmdbId: m.id, title: m.title, year: yearOf(m.release_date), posterPath: m.poster_path, posterUrl: posterUrl(m.poster_path, 'w500'), overview: m.overview ?? '' }
     },
   }
 }

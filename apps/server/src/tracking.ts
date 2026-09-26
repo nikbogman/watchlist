@@ -1,0 +1,55 @@
+import { desc, eq } from 'drizzle-orm'
+import type { Db } from './db.js'
+import { trackedMovies } from './schema.js'
+import { posterUrl, type MovieSummary, type Tmdb } from './tmdb.js'
+
+export const BUTTONS = ['to_watch', 'watched', 'favourite'] as const
+export type Button = (typeof BUTTONS)[number]
+
+type Row = typeof trackedMovies.$inferSelect
+type Tracked = Pick<Row, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
+
+const stateOf = (row?: Tracked) => ({ status: row?.status ?? null, favourite: row?.favourite ?? false, watchedAt: row?.watchedAt ?? null })
+
+/** The button table from PRD 01. Null means untrack. */
+function next(row: Tracked | undefined, button: Button, now: Date): Tracked | null {
+  const watched = (favourite: boolean): Tracked => ({ status: 'watched', addedAt: row?.addedAt ?? now, watchedAt: now, favourite })
+  switch (button) {
+    case 'to_watch':
+      return row?.status === 'to_watch' ? null : { status: 'to_watch', addedAt: now, watchedAt: null, favourite: false }
+    case 'watched':
+      return row?.status === 'watched' ? null : watched(false)
+    case 'favourite':
+      return row?.status === 'watched' ? { ...row, favourite: !row.favourite } : watched(true)
+  }
+}
+
+export function createTracking(db: Db, tmdb: Tmdb) {
+  const get = (tmdbId: number) => db.query.trackedMovies.findFirst({ where: eq(trackedMovies.tmdbId, tmdbId) })
+
+  return {
+    state: async (tmdbId: number) => stateOf(await get(tmdbId)),
+
+    /** Resolves to null when tracking starts on an id TMDB doesn't know; throws when TMDB is unreachable then. */
+    async press(tmdbId: number, button: Button) {
+      const row = await get(tmdbId)
+      const tracked = next(row, button, new Date())
+      if (!tracked) {
+        await db.delete(trackedMovies).where(eq(trackedMovies.tmdbId, tmdbId))
+      } else if (row) {
+        await db.update(trackedMovies).set(tracked).where(eq(trackedMovies.tmdbId, tmdbId))
+      } else {
+        // The copy is taken once, when tracking starts, and never refreshed.
+        const movie = await tmdb.details(tmdbId)
+        if (!movie) return null
+        await db.insert(trackedMovies).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...tracked })
+      }
+      return stateOf(tracked ?? undefined)
+    },
+
+    async toWatch(): Promise<MovieSummary[]> {
+      const rows = await db.select().from(trackedMovies).where(eq(trackedMovies.status, 'to_watch')).orderBy(desc(trackedMovies.addedAt))
+      return rows.map((m) => ({ tmdbId: m.tmdbId, title: m.title, year: m.year, posterUrl: posterUrl(m.posterPath, 'w185') }))
+    },
+  }
+}

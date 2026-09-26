@@ -40,6 +40,7 @@ test('details maps a TMDB movie with a w500 poster', async () => {
     tmdbId: 1,
     title: 'Heat',
     year: 1995,
+    posterPath: '/heat.jpg',
     posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg',
     overview: 'A heist.',
   })

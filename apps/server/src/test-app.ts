@@ -19,7 +19,7 @@ export function fakeTmdb(movies: (MovieSummary | MovieDetails)[] = []) {
     async details(tmdbId: number) {
       if (fake.down) throw new Error('TMDB down')
       const m = movies.find((m) => m.tmdbId === tmdbId)
-      return m ? { overview: '', ...m } : null
+      return m ? { overview: '', posterPath: null, ...m } : null
     },
   } satisfies Tmdb & { down: boolean }
   return fake

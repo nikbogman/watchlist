@@ -1,13 +1,13 @@
 import { expect, test } from 'vitest'
 import { fakeTmdb, testApp } from './test-app.js'
 
-const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg', overview: 'A heist.' }
+const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg', posterUrl: 'https://image.tmdb.org/t/p/w500/heat.jpg', overview: 'A heist.' }
 
-test('movie details come from TMDB', async () => {
+test('movie details come from TMDB, with the tracked state', async () => {
   const t = await testApp(fakeTmdb([heat]))
   const res = await t.request('/api/movies/3', { cookie: await t.login() })
   expect(res.status).toBe(200)
-  expect(await res.json()).toEqual(heat)
+  expect(await res.json()).toEqual({ ...heat, status: null, favourite: false, watchedAt: null })
 })
 
 test('movie details need a session', async () => {
