@@ -11,53 +11,57 @@ type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'w
 
 const entryOf = (e?: Entry | null) => ({ status: e?.status ?? null, favourite: e?.favourite ?? false, watchedAt: e?.watchedAt ?? null })
 
-// The Status and Favourite rules from CONTEXT.md. Each returns the entry's next state, or null to drop it.
+const toWatch = (now: Date): Entry => ({ status: 'to_watch', addedAt: now, watchedAt: null, favourite: false })
 
-function withStatus(current: Entry | undefined, status: Status | null, now: Date): Entry | null {
-  if (status === null) return null
-  if (current?.status === status) return current
-  if (status === 'to_watch') return { status, addedAt: now, watchedAt: null, favourite: false }
-  return { status, addedAt: current?.addedAt ?? now, watchedAt: now, favourite: false }
-}
-
-function withFavourite(current: Entry | undefined, favourite: boolean, now: Date): Entry | null {
-  if (current?.status === 'watched') return { ...current, favourite }
-  if (!favourite) return current ?? null
-  // Favouriting a movie that isn't Watched marks it Watched.
-  return { status: 'watched', addedAt: current?.addedAt ?? now, watchedAt: now, favourite: true }
-}
+const watched = (current: Entry | undefined, now: Date, favourite = false): Entry => ({
+  status: 'watched',
+  addedAt: current?.addedAt ?? now,
+  watchedAt: now,
+  favourite,
+})
 
 export function createCollection(db: Db, tmdb: Tmdb) {
-  const find = (tmdbId: number) => db.query.collectionEntry.findFirst({ where: eq(collectionEntry.tmdbId, tmdbId) })
+  const byId = (tmdbId: number) => eq(collectionEntry.tmdbId, tmdbId)
+  const find = (tmdbId: number) => db.query.collectionEntry.findFirst({ where: byId(tmdbId) })
 
-  /** Stores the next state. A new entry needs TMDB, so resolves to null if TMDB doesn't know the id, or UNREACHABLE. Database errors throw. */
-  async function save(tmdbId: number, current: Entry | undefined, next: Entry | null) {
-    if (next === current) return entryOf(current)
-    if (!next) {
-      await db.delete(collectionEntry).where(eq(collectionEntry.tmdbId, tmdbId))
-    } else if (current) {
-      await db.update(collectionEntry).set(next).where(eq(collectionEntry.tmdbId, tmdbId))
-    } else {
-      // The copy is taken once, when the entry is created, and never refreshed.
-      const movie = await orUnreachable(tmdb.details(tmdbId))
-      if (movie === UNREACHABLE || !movie) return movie
-      await db.insert(collectionEntry).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...next })
-    }
-    return entryOf(next)
+  async function drop(tmdbId: number) {
+    await db.delete(collectionEntry).where(byId(tmdbId))
+    return entryOf(null)
   }
 
+  async function update(tmdbId: number, entry: Entry) {
+    await db.update(collectionEntry).set(entry).where(byId(tmdbId))
+    return entryOf(entry)
+  }
+
+  /** Copies the movie from TMDB once, never refreshed. Resolves to null if TMDB doesn't know the id, or UNREACHABLE. */
+  async function create(tmdbId: number, entry: Entry) {
+    const movie = await orUnreachable(tmdb.details(tmdbId))
+    if (movie === UNREACHABLE || !movie) return movie
+    await db.insert(collectionEntry).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...entry })
+    return entryOf(entry)
+  }
+
+  // The Status and Favourite rules from CONTEXT.md. Database errors throw.
   return {
     entry: async (tmdbId: number) => entryOf(await find(tmdbId)),
 
     /** Null drops the entry. */
     async setStatus(tmdbId: number, status: Status | null) {
+      if (status === null) return drop(tmdbId)
       const current = await find(tmdbId)
-      return save(tmdbId, current, withStatus(current, status, new Date()))
+      if (current?.status === status) return entryOf(current)
+      const next = status === 'to_watch' ? toWatch(new Date()) : watched(current, new Date())
+      return current ? update(tmdbId, next) : create(tmdbId, next)
     },
 
     async setFavourite(tmdbId: number, favourite: boolean) {
       const current = await find(tmdbId)
-      return save(tmdbId, current, withFavourite(current, favourite, new Date()))
+      if (current?.status === 'watched') return update(tmdbId, { ...current, favourite })
+      if (!favourite) return entryOf(current)
+      // Favouriting a movie that isn't Watched marks it Watched.
+      const next = watched(current, new Date(), true)
+      return current ? update(tmdbId, next) : create(tmdbId, next)
     },
 
     async list(status: Status) {
