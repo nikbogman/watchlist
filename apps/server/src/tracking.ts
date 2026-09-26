@@ -1,7 +1,8 @@
 import { desc, eq, type SQL } from 'drizzle-orm'
 import type { Db } from './db.js'
 import { trackedMovies } from './schema.js'
-import { orUnreachable, toRow, UNREACHABLE, type Tmdb } from './tmdb.js'
+import { toRow } from './movies.js'
+import { orUnreachable, UNREACHABLE, type Tmdb } from './tmdb.js'
 
 export const BUTTONS = ['to_watch', 'watched', 'favourite'] as const
 export type Button = (typeof BUTTONS)[number]

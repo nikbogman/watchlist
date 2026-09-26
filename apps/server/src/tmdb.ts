@@ -1,13 +1,6 @@
+import type { Movie, MovieDetails } from './movies.js'
+
 const API = 'https://api.themoviedb.org/3'
-const IMAGES = 'https://image.tmdb.org/t/p'
-
-/** A movie as the TMDB adapters return it: the poster is a path, sized only when a response is shaped. */
-export type Movie = { tmdbId: number; title: string; year: number | null; posterPath: string | null }
-
-export type MovieDetails = Movie & { overview: string }
-
-/** A list or search row as the app receives it. */
-export type MovieSummary = { tmdbId: number; title: string; year: number | null; posterUrl: string | null }
 
 /** What a TMDB call resolves to when TMDB can't be reached. A symbol, so it can't be mistaken for data. */
 export const UNREACHABLE = Symbol('TMDB unreachable')
@@ -21,14 +14,6 @@ export type Tmdb = {
 }
 
 type TmdbMovie = { id: number; title: string; release_date?: string; poster_path: string | null; adult?: boolean; overview?: string }
-
-const SIZES = { row: 'w185', page: 'w500' }
-
-const posterUrl = (path: string | null, use: keyof typeof SIZES) => (path ? `${IMAGES}/${SIZES[use]}${path}` : null)
-
-export const toRow = ({ tmdbId, title, year, posterPath }: Movie): MovieSummary => ({ tmdbId, title, year, posterUrl: posterUrl(posterPath, 'row') })
-
-export const toPage = ({ posterPath, ...m }: MovieDetails) => ({ ...m, posterUrl: posterUrl(posterPath, 'page') })
 
 // TMDB sends "" for an unknown release date.
 const yearOf = (date?: string) => (date ? Number(date.slice(0, 4)) : null)
