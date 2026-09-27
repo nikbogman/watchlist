@@ -7,15 +7,11 @@
     "icon": "./assets/images/icon.png",
     "scheme": "watcher",
     "userInterfaceStyle": "dark",
-    "ios": {
-      "icon": "./assets/expo.icon"
-    },
     "android": {
       "package": "com.nikbogman.watcher",
       "adaptiveIcon": {
         "backgroundColor": "#16140F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
@@ -27,7 +23,7 @@
         {
           "backgroundColor": "#16140F",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
       ],
       "expo-secure-store",
