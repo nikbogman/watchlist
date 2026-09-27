@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router'
 import type { ReactNode } from 'react'
 import type { ColorValue } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
 
 import { colors, fonts } from '@/theme'
@@ -14,6 +15,8 @@ function Icon({ color, children }: { color: ColorValue; children: ReactNode }) {
 }
 
 export default function TabsLayout() {
+  // Design: 62px of content over 22px of bottom padding; system nav buttons get at least that.
+  const bottom = Math.max(useSafeAreaInsets().bottom, 22)
   return (
     // History, so back from the movie page returns to the tab it was opened from.
     <Tabs
@@ -23,7 +26,12 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.tabInactive,
-        tabBarStyle: { backgroundColor: colors.tabBar, borderTopColor: colors.tabBarBorder },
+        tabBarStyle: {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.tabBarBorder,
+          height: 62 + bottom,
+          paddingBottom: bottom,
+        },
         tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
       }}>
       <Tabs.Screen
