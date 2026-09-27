@@ -11,6 +11,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.nikbogman.watcher",
       "adaptiveIcon": {
         "backgroundColor": "#16140F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -36,6 +37,18 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "backgroundColor": "#16140F"
+    "backgroundColor": "#16140F",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0487e23-3aad-4927-bd8e-f6d36528c396"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f0487e23-3aad-4927-bd8e-f6d36528c396"
+    }
   }
 }

@@ -1,56 +1,68 @@
-# Welcome to your Expo app 👋
+# Watcher mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo app. Talks to `apps/server` through `EXPO_PUBLIC_API_URL`.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Develop
 
 ```bash
-npm run reset-project
+cp .env.example .env   # set EXPO_PUBLIC_API_URL to your machine's LAN IP, e.g. http://192.168.1.20:3000
+pnpm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Install on a phone (no Google Play)
 
-### Other setup steps
+The app ships as an APK built by EAS and installed directly. After that, JS changes arrive over the air through EAS Update, so the APK is only reinstalled when native code changes.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Run EAS CLI as `npx eas-cli@latest <command>` from `apps/mobile`.
 
-## Learn more
+### Setup (done)
 
-To learn more about developing your project with Expo, look at the following resources:
+The project is linked to EAS project `@nikbogman/mobile`. `app.json` has the EAS project ID, `runtimeVersion` (policy `appVersion`) and `updates.url`. In `eas.json`, the `preview` profile builds an APK on channel `preview` using EAS environment `preview`. On a new machine you only need `npx eas-cli@latest login`.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+`.env` is local only and never reaches EAS. Builds and updates read `EXPO_PUBLIC_API_URL` from the EAS `preview` environment, which points at `https://watchlist-production-b79d.up.railway.app`. To change it:
 
-## Join the community
+```bash
+npx eas-cli@latest env:set preview --name EXPO_PUBLIC_API_URL --value https://<domain> --visibility plaintext
+```
 
-Join our community of developers creating universal apps.
+Then publish an update. The value is inlined into the JS bundle, so no rebuild is needed.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+With `runtimeVersion` policy `appVersion`, bumping `version` in `app.json` starts a new runtime. Existing APKs stop receiving updates until you rebuild.
+
+### Build and install
+
+```bash
+npx eas-cli@latest build -p android --profile preview
+```
+
+Open the link or QR code it prints on the phone, download the APK, and allow "install unknown apps" when asked.
+
+### Ship an update
+
+```bash
+npx eas-cli@latest update --channel preview --environment preview -m "<what changed>"
+```
+
+The app downloads the update on launch and runs it on the next launch. Fully close it and reopen, up to twice.
+
+### Update or rebuild?
+
+| Change | Ship with |
+| --- | --- |
+| JS/TS, styles, images, fonts | `eas update` |
+| New package with native code, `app.json` plugins or native config, Expo SDK upgrade | New `eas build`, then reinstall the APK |
+
+An update only reaches builds with the same runtime version, which is `version` in `app.json` here. Native changes aren't detected automatically, so after a native change bump `version` and rebuild. Otherwise the old APK installs JS that calls native code it doesn't have, and crashes.
+
+### Update not showing?
+
+1. Check that it was published to channel `preview` for Android: `npx eas-cli@latest update:list`.
+2. Fully close and reopen the app twice.
+3. If `version` in `app.json` changed since the APK was built, rebuild.
+4. Otherwise follow https://docs.expo.dev/eas-update/debug.md.
+
+## For agents
+
+- Publishing (`eas update`, `eas build`) changes remote state that installed apps pick up. Only run it when the user asks, and never to a production channel without explicit approval.
+- Decide update vs rebuild with the table above. Don't change the `runtimeVersion` policy to force an update through.
+- `eas login` is interactive. If `npx eas-cli@latest whoami` says "Not logged in", stop and ask the user to log in.
