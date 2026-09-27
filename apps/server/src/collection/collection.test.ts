@@ -34,6 +34,8 @@ async function collection(tmdb = fakeTmdb([heat, alien, ran])) {
     },
     list: (status: string) => t.request(`/api/collection?status=${status}`, { cookie }),
     app: t,
+    cookie,
+    favourites: () => t.request('/api/collection?favourite=true', { cookie }),
   }
 }
 
@@ -121,6 +123,27 @@ test('Watched lists watched movies newest Watched date first', async () => {
   expect(await ids(await c.list('watched'))).toEqual([3, 5, 4])
 })
 
+test('Favourites lists favourites newest Watched date first, from the stored copy', async () => {
+  const c = await collection()
+  await c.set(3, WATCHED)
+  vi.setSystemTime(DAY2)
+  await c.set(4, FAVOURITE)
+  vi.setSystemTime(new Date('2026-01-03T10:00:00Z'))
+  await c.set(5, FAVOURITE)
+  await c.set(3, FAVOURITE)
+  c.tmdb.down = true
+  const res = await c.favourites()
+  expect(res.status).toBe(200)
+  expect(await ids(res)).toEqual([5, 4, 3])
+})
+
+test.each([UNFAVOURITE, TO_WATCH, DROP])('setting %j takes a movie off Favourites', async (change) => {
+  const c = await collection()
+  await c.set(3, FAVOURITE)
+  await c.set(3, change)
+  expect(await (await c.favourites()).json()).toEqual([])
+})
+
 test('a movie moved back from Watched counts as newly added', async () => {
   const c = await collection()
   await c.set(3, WATCHED)
@@ -137,8 +160,9 @@ test('dropped movies leave To watch', async () => {
   expect(await (await c.list('to_watch')).json()).toEqual([])
 })
 
-test('the collection is filtered by a known status', async () => {
-  expect((await (await collection()).list('someday')).status).toBe(400)
+test.each(['status=someday', 'favourite=false', 'favourite=true&status=watched', ''])('the collection needs a known filter, not %j', async (query) => {
+  const c = await collection()
+  expect((await c.app.request(`/api/collection?${query}`, { cookie: c.cookie })).status).toBe(400)
 })
 
 test.each([TO_WATCH, FAVOURITE])('creating an entry with %j returns 404 for an unknown movie', async (change) => {

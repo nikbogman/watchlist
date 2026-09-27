@@ -1,11 +1,5 @@
-import { EmptyList } from '@/components/empty-list'
-import { ScreenHeader } from '@/components/screen-header'
+import { CollectionList } from '@/components/collection-list'
 
 export default function Favourites() {
-  return (
-    <>
-      <ScreenHeader title="Favourites" logout />
-      <EmptyList text="No favourites yet." />
-    </>
-  )
+  return <CollectionList title="Favourites" filter={{ favourite: true }} empty="No favourites yet." />
 }
