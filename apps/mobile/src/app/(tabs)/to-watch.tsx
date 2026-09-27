@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { ActivityIndicator, FlatList, StyleSheet, Text } from 'react-native'
 
-import type { Status } from 'server/src/collection'
+import type { Status } from 'server/src/collection/collection'
 
 import { api, parseResponse } from '@/api'
 import { EmptyList } from '@/components/empty-list'

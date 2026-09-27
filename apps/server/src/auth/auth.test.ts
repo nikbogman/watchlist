@@ -1,7 +1,7 @@
 import { beforeEach, expect, test } from 'vitest'
 import { createAuth } from './auth.js'
 import { seed } from './seed.js'
-import { EMAIL, PASSWORD, testApp } from './test-app.js'
+import { EMAIL, PASSWORD, testApp } from '../test/test-app.js'
 
 let t: Awaited<ReturnType<typeof testApp>>
 

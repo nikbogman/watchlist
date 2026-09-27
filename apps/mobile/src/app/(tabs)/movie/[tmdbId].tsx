@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
-import type { Status } from 'server/src/collection'
+import type { Status } from 'server/src/collection/collection'
 
 import { api, parseResponse } from '@/api'
 import { Poster } from '@/components/movie-row'
@@ -21,15 +21,17 @@ export default function Movie() {
   const entry = api.api.collection[':tmdbId']
   // One mutation for all three buttons, so they're all disabled while any toggle is saving.
   const toggle = useMutation({
-    mutationFn: (request: () => ReturnType<typeof entry.status.$post> | ReturnType<typeof entry.favourite.$post>) => parseResponse(request()),
+    mutationFn: (request: () => ReturnType<typeof entry.status.$put> | ReturnType<typeof entry.favourite.$put>) => parseResponse(request()),
     onSuccess: (state) => {
       queryClient.setQueryData(['movie', tmdbId], (old: typeof movie.data) => old && { ...old, ...state })
       queryClient.invalidateQueries({ queryKey: ['collection'] })
     },
     onError: () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.'),
   })
-  const toggleStatus = (status: Status) => toggle.mutate(() => entry.status.$post({ param: { tmdbId }, json: { status } }))
-  const toggleFavourite = () => toggle.mutate(() => entry.favourite.$post({ param: { tmdbId } }))
+  // Pressing the button that's on clears it: the Status drops the movie, the Favourite unmarks it.
+  const toggleStatus = (status: Status) =>
+    toggle.mutate(() => entry.status.$put({ param: { tmdbId }, json: { status: movie.data?.status === status ? null : status } }))
+  const toggleFavourite = () => toggle.mutate(() => entry.favourite.$put({ param: { tmdbId }, json: { favourite: !movie.data?.favourite } }))
 
   return (
     <View style={styles.screen}>

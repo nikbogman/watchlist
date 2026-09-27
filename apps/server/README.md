@@ -7,4 +7,4 @@ pnpm dev               # http://localhost:3000, migrations run on start
 pnpm test
 ```
 
-After changing `src/schema.ts`, run `pnpm db:generate` to add a migration.
+After changing `src/schema/`, run `pnpm db:generate` to add a migration.

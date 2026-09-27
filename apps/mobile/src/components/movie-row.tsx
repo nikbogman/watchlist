@@ -1,7 +1,7 @@
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import type { MovieSummary } from 'server/src/movies'
+import type { MovieSummary } from 'server/src/movies/movies'
 
 import { colors, fonts } from '@/theme'
 
