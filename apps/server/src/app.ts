@@ -4,6 +4,7 @@ import { createAuth } from './auth/auth.js'
 import { createCollection } from './collection/collection.js'
 import { collectionRoutes } from './collection/routes.js'
 import type { Db } from './db.js'
+import { letterboxdRoutes } from './letterboxd/routes.js'
 import { movieRoutes } from './movies/routes.js'
 import type { Tmdb } from './tmdb/tmdb.js'
 
@@ -18,6 +19,9 @@ export function createApp(db: Db, tmdb: Tmdb) {
   app.onError((err, c) =>
     err instanceof HTTPException ? c.json({ error: err.message }, err.status) : c.json({ error: 'Internal error' }, 500),
   )
+
+  // Checks the email and password itself, so it sits before the session check.
+  app.route('/api/import/letterboxd', letterboxdRoutes(auth, db, tmdb))
 
   app.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
