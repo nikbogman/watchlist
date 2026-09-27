@@ -1,7 +1,11 @@
 import { expect } from 'vitest'
 import { createApp } from '../app.js'
 import { createAuth } from '../auth/auth.js'
-import { createDb } from '../db.js'
+import { PGlite } from '@electric-sql/pglite'
+import { drizzle } from 'drizzle-orm/pglite'
+import { migrate } from 'drizzle-orm/pglite/migrator'
+import { MIGRATIONS } from '../db.js'
+import * as schema from '../schema/index.js'
 import { seed } from '../auth/seed.js'
 import type { Movie, MovieDetails } from '../movies/movies.js'
 import type { Tmdb } from '../tmdb/tmdb.js'
@@ -26,12 +30,19 @@ export function fakeTmdb(movies: (Movie | MovieDetails)[] = []) {
   return fake
 }
 
+// Booting and migrating Postgres is slow, so each test file does it once and every app gets a clone.
+const migrated = (async () => {
+  const client = new PGlite()
+  await migrate(drizzle({ client }), { migrationsFolder: MIGRATIONS })
+  return client
+})()
+
 let ip = 0
 
 /** The app over a fresh in-memory database with the one account seeded. */
 export async function testApp(tmdb: Tmdb = fakeTmdb()) {
   ip++ // the rate limiter keys on client IP, so each app gets its own
-  const db = await createDb(':memory:')
+  const db = drizzle({ client: (await (await migrated).clone()) as PGlite, schema })
   const app = createApp(db, tmdb)
   await seed(createAuth(db), EMAIL, PASSWORD)
 
