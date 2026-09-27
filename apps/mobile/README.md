@@ -5,9 +5,10 @@ Expo app. Talks to `apps/server` through `EXPO_PUBLIC_API_URL`.
 ## Develop
 
 ```bash
-cp .env.example .env   # set EXPO_PUBLIC_API_URL to your machine's LAN IP, e.g. http://192.168.1.20:3000
 pnpm start
 ```
+
+`EXPO_PUBLIC_API_URL` comes from `.env` (hosted server). A `.env.local` overrides it for a local server: `http://10.0.2.2:3000` from the Android emulator, or your machine's LAN IP from a phone, e.g. `http://192.168.1.20:3000`. Delete or rename `.env.local` to go back to the hosted server. See `.env.example`.
 
 ## Install on a phone (no Google Play)
 
@@ -19,7 +20,7 @@ Run EAS CLI as `npx eas-cli@latest <command>` from `apps/mobile`.
 
 The project is linked to EAS project `@nikbogman/mobile`. `app.json` has the EAS project ID, `runtimeVersion` (policy `appVersion`) and `updates.url`. In `eas.json`, the `preview` profile builds an APK on channel `preview` using EAS environment `preview`. On a new machine you only need `npx eas-cli@latest login`.
 
-`.env` is local only and never reaches EAS. Builds and updates read `EXPO_PUBLIC_API_URL` from the EAS `preview` environment, which points at `https://watchlist-production-b79d.up.railway.app`. To change it:
+`.env` and `.env.local` are local only and never reach EAS. Builds and updates read `EXPO_PUBLIC_API_URL` from the EAS `preview` environment, which points at `https://watchlist-production-b79d.up.railway.app`. To change it:
 
 ```bash
 npx eas-cli@latest env:set preview --name EXPO_PUBLIC_API_URL --value https://<domain> --visibility plaintext
