@@ -1,11 +1,5 @@
-import { EmptyList } from '@/components/empty-list'
-import { ScreenHeader } from '@/components/screen-header'
+import { CollectionList } from '@/components/collection-list'
 
 export default function Watched() {
-  return (
-    <>
-      <ScreenHeader title="Watched" logout />
-      <EmptyList text="Nothing watched yet." />
-    </>
-  )
+  return <CollectionList title="Watched" filter={{ status: 'watched' }} empty="Nothing watched yet." />
 }
