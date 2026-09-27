@@ -5,11 +5,14 @@ import Svg, { Path } from 'react-native-svg'
 import { authClient } from '@/auth-client'
 import { colors, fonts } from '@/theme'
 
-export function ScreenHeader({ title, logout }: { title: string; logout?: boolean }) {
+export function ScreenHeader({ title, count, logout }: { title: string; count?: string; logout?: boolean }) {
   const { top } = useSafeAreaInsets()
   return (
     <View style={[styles.header, { paddingTop: top + 16 }]}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>
+        {title}
+        {count && <Text style={styles.count}>  {count}</Text>}
+      </Text>
       {logout && (
         // Signing out deletes the server session; the root guard then shows Login.
         <Pressable style={styles.logout} onPress={() => authClient.signOut()} accessibilityRole="button" accessibilityLabel="Log out">
@@ -26,6 +29,7 @@ export function ScreenHeader({ title, logout }: { title: string; logout?: boolea
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 20, paddingRight: 12, paddingBottom: 12 },
-  title: { fontFamily: fonts.title, fontSize: 34, color: colors.text },
+  title: { flexShrink: 1, fontFamily: fonts.title, fontSize: 34, color: colors.text },
+  count: { fontFamily: fonts.medium, fontSize: 17, color: colors.muted },
   logout: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 })

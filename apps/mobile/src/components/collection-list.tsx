@@ -28,7 +28,11 @@ export function CollectionList({ title, filter, empty }: { title: string; filter
 
   return (
     <>
-      <ScreenHeader title={title} logout />
+      <ScreenHeader
+        title={title}
+        count={list.data?.length ? (q ? `${matches.length} of ${list.data.length}` : String(list.data.length)) : undefined}
+        logout
+      />
       {list.isPending ? (
         <ActivityIndicator style={styles.center} color={colors.muted} />
       ) : list.isError ? (
