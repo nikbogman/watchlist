@@ -1,3 +1,4 @@
+import { Image } from 'expo-image'
 import { useRef, useState } from 'react'
 import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
@@ -23,9 +24,15 @@ export default function Login() {
   return (
     // Edge-to-edge Android no longer resizes the window for the keyboard, so pad on both platforms.
     <KeyboardAvoidingView style={styles.fill} behavior="padding">
+      <Image source={require('../../assets/images/logo-halftone.png')} style={styles.logo} />
       <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <Text style={styles.name}>Watcher</Text>
+          <Image
+            source={require('../../assets/images/wordmark.png')}
+            style={styles.wordmark}
+            accessibilityRole="header"
+            accessibilityLabel="popcorn"
+          />
           <Text style={styles.tagline}>Your private movie log.</Text>
         </View>
         <View style={styles.form}>
@@ -76,9 +83,10 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: colors.background },
-  screen: { flexGrow: 1, justifyContent: 'center', gap: 48, paddingHorizontal: 28, paddingVertical: 24 },
+  logo: { position: 'absolute', top: -135, right: -160, width: 560, height: 560 },
+  screen: { flexGrow: 1, justifyContent: 'flex-end', gap: 40, paddingHorizontal: 28, paddingTop: 24, paddingBottom: 56 },
   brand: { gap: 8 },
-  name: { fontFamily: fonts.title, fontSize: 48, letterSpacing: -0.5, color: colors.text },
+  wordmark: { width: 250, aspectRatio: 2721 / 536 },
   tagline: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted },
   form: { gap: 20 },
   field: { gap: 8 },
