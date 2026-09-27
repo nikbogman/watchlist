@@ -8,7 +8,8 @@
     "test": "vitest run",
     "seed": "tsx --env-file-if-exists=.env src/auth/seed.ts",
     "typecheck": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "import:letterboxd": "tsx --env-file-if-exists=.env src/letterboxd/import.ts"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.6",

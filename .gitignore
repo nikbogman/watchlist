@@ -1,3 +1,6 @@
 node_modules
 .env
 *.db
+
+# Letterboxd exports (personal data)
+letterboxd-*/
