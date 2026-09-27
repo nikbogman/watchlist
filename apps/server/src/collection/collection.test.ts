@@ -206,7 +206,7 @@ test('collection routes need a session', async () => {
 
 test('a database failure on a change is a 500, not a TMDB error', async () => {
   const c = await collection()
-  await c.app.db.run(sql`drop table collection_entry`)
+  await c.app.db.execute(sql`drop table collection_entry`)
   const res = await c.set(3, TO_WATCH)
   expect(res.status).toBe(500)
   expect(await res.json()).toEqual({ error: 'Internal error' })

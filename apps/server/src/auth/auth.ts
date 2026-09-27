@@ -8,7 +8,7 @@ const DAY = 60 * 60 * 24
 
 export function createAuth(db: Db) {
   return betterAuth({
-    database: drizzleAdapter(db, { provider: 'sqlite', schema }),
+    database: drizzleAdapter(db, { provider: 'pg', schema }),
     emailAndPassword: { enabled: true, disableSignUp: true },
     session: { expiresIn: 90 * DAY, updateAge: DAY },
     rateLimit: { enabled: true },

@@ -4,9 +4,10 @@ import { createDb } from './db.js'
 import { createTmdbClient } from './tmdb/tmdb.js'
 
 if (!process.env.TMDB_API_KEY) throw new Error('Set TMDB_API_KEY')
+if (!process.env.DATABASE_URL) throw new Error('Set DATABASE_URL')
 
 const app = createApp(
-  await createDb(process.env.DATABASE_URL ?? 'file:watcher.db'),
+  await createDb(process.env.DATABASE_URL),
   createTmdbClient(process.env.TMDB_API_KEY),
 )
 

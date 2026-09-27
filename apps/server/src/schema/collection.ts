@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer, check } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, boolean, timestamp, check } from "drizzle-orm/pg-core";
 
 // The Status and Favourite rules' invariants, enforced by the database too.
-export const collectionEntry = sqliteTable(
+export const collectionEntry = pgTable(
   "collection_entry",
   {
     tmdbId: integer("tmdb_id").primaryKey(),
@@ -10,9 +10,9 @@ export const collectionEntry = sqliteTable(
     year: integer("year"),
     posterPath: text("poster_path"),
     status: text("status", { enum: ["to_watch", "watched"] }).notNull(),
-    addedAt: integer("added_at", { mode: "timestamp_ms" }).notNull(),
-    watchedAt: integer("watched_at", { mode: "timestamp_ms" }),
-    favourite: integer("favourite", { mode: "boolean" }).notNull(),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull(),
+    watchedAt: timestamp("watched_at", { withTimezone: true }),
+    favourite: boolean("favourite").notNull(),
   },
   (t) => [
     check("status_valid", sql`${t.status} in ('to_watch', 'watched')`),
