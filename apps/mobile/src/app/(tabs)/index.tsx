@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native'
-import Svg, { Circle, Path } from 'react-native-svg'
+import { FlatList, StyleSheet, Text, View } from 'react-native'
 
 import { api, parseResponse } from '@/api'
 import { MovieRow } from '@/components/movie-row'
+import { SearchField } from '@/components/search-field'
 import { ScreenHeader } from '@/components/screen-header'
 import { colors, fonts } from '@/theme'
 
@@ -29,22 +29,7 @@ export default function Search() {
   return (
     <View style={styles.screen}>
       <ScreenHeader title="Search" />
-      <View style={styles.field}>
-        <Svg style={styles.icon} width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.muted} strokeWidth={1.8} strokeLinecap="round">
-          <Circle cx={11} cy={11} r={7} />
-          <Path d="M20 20l-4-4" />
-        </Svg>
-        <TextInput
-          style={styles.input}
-          value={text}
-          onChangeText={setText}
-          placeholder="Movie title"
-          placeholderTextColor={colors.muted}
-          returnKeyType="search"
-          autoCorrect={false}
-          accessibilityLabel="Search movies by title"
-        />
-      </View>
+      <SearchField value={text} onChangeText={setText} placeholder="Movie title" label="Search movies by title" />
       {search.isError ? (
         <Text style={styles.message}>Couldn't search right now. Try again in a moment.</Text>
       ) : (
@@ -63,19 +48,5 @@ export default function Search() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  field: { marginHorizontal: 20, marginBottom: 16, justifyContent: 'center' },
-  icon: { position: 'absolute', left: 14, zIndex: 1 },
-  input: {
-    height: 48,
-    paddingLeft: 44,
-    paddingRight: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    color: colors.text,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-  },
   message: { padding: 20, fontFamily: fonts.regular, fontSize: 16, color: colors.muted, textAlign: 'center' },
 })
