@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text } from 'react-native'
 
 import type { Filter } from 'server/src/collection/collection'
@@ -15,29 +15,47 @@ import { colors, fonts } from '@/theme'
 export function CollectionList({ title, filter, empty }: { title: string; filter: Filter; empty: string }) {
   const [text, setText] = useState('')
   const [oldestFirst, setOldestFirst] = useState(false)
-  const list = useQuery({
-    queryKey: ['collection', filter],
-    queryFn: () =>
-      parseResponse(api.api.collection.$get({ query: 'status' in filter ? { status: filter.status } : { favourite: 'true' } })),
+  const [titleSearch, setTitleSearch] = useState('')
+  // Wait for a pause in typing before asking the server.
+  useEffect(() => {
+    const timer = setTimeout(() => setTitleSearch(text.trim()), 250)
+    return () => clearTimeout(timer)
+  }, [text])
+
+  const list = useInfiniteQuery({
+    queryKey: ['collection', filter, titleSearch, oldestFirst],
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        api.api.collection.$get({
+          query: {
+            ...('status' in filter ? { status: filter.status } : { favourite: 'true' }),
+            title: titleSearch,
+            order: oldestFirst ? 'oldest' : 'newest',
+            offset: String(pageParam),
+          },
+        }),
+      ),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.nextOffset ?? undefined,
+    // Keeps the list on screen while a new search or sort loads.
+    placeholderData: keepPreviousData,
   })
 
-  // The server sends newest first, by the date the movie joined this list.
-  const q = text.trim().toLowerCase()
-  const matches = list.data?.filter((m) => m.title.toLowerCase().includes(q)) ?? []
-  const movies = oldestFirst ? [...matches].reverse() : matches
+  const first = list.data?.pages[0]
+  const movies = list.data?.pages.flatMap((p) => p.movies) ?? []
 
   return (
     <>
       <ScreenHeader
         title={title}
-        count={list.data?.length ? (q ? `${matches.length} of ${list.data.length}` : String(list.data.length)) : undefined}
+        count={first?.total ? (titleSearch ? `${first.matching} of ${first.total}` : String(first.total)) : undefined}
         logout
       />
       {list.isPending ? (
         <ActivityIndicator style={styles.center} color={colors.muted} />
       ) : list.isError ? (
         <Text style={styles.message}>Couldn't load your list. Try again in a moment.</Text>
-      ) : list.data.length === 0 ? (
+      ) : list.data.pages[0].total === 0 ? (
         <EmptyList text={empty} />
       ) : (
         <>
@@ -57,7 +75,10 @@ export function CollectionList({ title, filter, empty }: { title: string; filter
             renderItem={({ item }) => <MovieRow movie={item} />}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            ListEmptyComponent={<Text style={styles.message}>No movies match “{text.trim()}”.</Text>}
+            onEndReached={() => list.hasNextPage && !list.isFetchingNextPage && list.fetchNextPage()}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={list.isFetchingNextPage ? <ActivityIndicator style={styles.more} color={colors.muted} /> : null}
+            ListEmptyComponent={<Text style={styles.message}>No movies match “{titleSearch}”.</Text>}
           />
         </>
       )}
@@ -67,6 +88,7 @@ export function CollectionList({ title, filter, empty }: { title: string; filter
 
 const styles = StyleSheet.create({
   center: { flex: 1 },
+  more: { paddingVertical: 20 },
   message: { padding: 20, fontFamily: fonts.regular, fontSize: 16, color: colors.muted, textAlign: 'center' },
   sort: { alignSelf: 'flex-end', marginRight: 20, marginTop: -4, marginBottom: 8 },
   sortText: { fontFamily: fonts.semibold, fontSize: 13, color: colors.accent },

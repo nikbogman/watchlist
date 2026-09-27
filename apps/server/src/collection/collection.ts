@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, asc, desc, eq, ilike } from 'drizzle-orm'
 import type { Db } from '../db.js'
 import { toRow } from '../movies/movies.js'
 import { collectionEntry } from '../schema/index.js'
@@ -7,6 +7,10 @@ import { orUnreachable, UNREACHABLE, type Tmdb } from '../tmdb/tmdb.js'
 export const STATUSES = collectionEntry.status.enumValues
 export type Status = (typeof STATUSES)[number]
 export type Filter = { status: Status } | { favourite: true }
+/** A page of a list: title search, sort direction and where to start. */
+export type Page = { title?: string; oldestFirst?: boolean; offset?: number }
+
+export const PAGE_SIZE = 30
 
 type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
 
@@ -90,23 +94,40 @@ export function createCollection(db: Db, tmdb: Tmdb) {
       return create(tmdbId, next)
     },
 
-    /** To watch and Watched filter by Status, Favourites by Favourite. Newest first. */
-    async list(filter: Filter) {
+    /**
+     * To watch and Watched filter by Status, Favourites by Favourite. Newest first unless oldestFirst.
+     * `total` counts the whole list, `matching` only the titles containing `title`.
+     */
+    async list(filter: Filter, { title = '', oldestFirst = false, offset = 0 }: Page = {}) {
       let where
-      let newestFirst
+      let date
       if ('favourite' in filter) {
         where = eq(collectionEntry.favourite, true)
-        newestFirst = desc(collectionEntry.watchedAt)
+        date = collectionEntry.watchedAt
       } else if (filter.status === 'to_watch') {
         where = eq(collectionEntry.status, filter.status)
-        newestFirst = desc(collectionEntry.addedAt)
+        date = collectionEntry.addedAt
       } else {
         where = eq(collectionEntry.status, filter.status)
-        newestFirst = desc(collectionEntry.watchedAt)
+        date = collectionEntry.watchedAt
       }
 
-      const entries = await db.select().from(collectionEntry).where(where).orderBy(newestFirst)
-      return entries.map(toRow)
+      const direction = oldestFirst ? asc : desc
+      const search = title ? and(where, ilike(collectionEntry.title, `%${title.replace(/[\\%_]/g, '\\$&')}%`)) : where
+      const [entries, total, matching] = await Promise.all([
+        db
+          .select()
+          .from(collectionEntry)
+          .where(search)
+          // tmdbId breaks date ties so pages never overlap.
+          .orderBy(direction(date), direction(collectionEntry.tmdbId))
+          .limit(PAGE_SIZE)
+          .offset(offset),
+        db.$count(collectionEntry, where),
+        title ? db.$count(collectionEntry, search) : undefined,
+      ])
+      const next = offset + entries.length
+      return { movies: entries.map(toRow), total, matching: matching ?? total, nextOffset: next < (matching ?? total) ? next : null }
     },
   }
 }

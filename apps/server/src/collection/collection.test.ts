@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import type { Status } from './collection.js'
+import { PAGE_SIZE, type Status } from './collection.js'
+import { collectionEntry } from '../schema/index.js'
 import { fakeTmdb, testApp } from '../test/test-app.js'
 
 const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg' }
@@ -32,14 +33,14 @@ async function collection(tmdb = fakeTmdb([heat, alien, ran])) {
       const { status, favourite, watchedAt } = await (await t.request(`/api/movies/${tmdbId}`, { cookie })).json()
       return { status, favourite, watchedAt }
     },
-    list: (status: string) => t.request(`/api/collection?status=${status}`, { cookie }),
+    list: (status: string, query = '') => t.request(`/api/collection?status=${status}${query}`, { cookie }),
     app: t,
     cookie,
     favourites: () => t.request('/api/collection?favourite=true', { cookie }),
   }
 }
 
-const ids = async (res: Response) => (await res.json()).map((m: { tmdbId: number }) => m.tmdbId)
+const ids = async (res: Response) => (await res.json()).movies.map((m: { tmdbId: number }) => m.tmdbId)
 
 const notInCollection = { status: null, favourite: false, watchedAt: null }
 const toWatch = { status: 'to_watch', favourite: false, watchedAt: null }
@@ -106,10 +107,15 @@ test('To watch lists To watch movies newest added first, from the stored copy', 
   c.tmdb.down = true
   const res = await c.list('to_watch')
   expect(res.status).toBe(200)
-  expect(await res.json()).toEqual([
-    { tmdbId: 4, title: 'Alien', year: 1979, posterUrl: null },
-    { tmdbId: 3, title: 'Heat', year: 1995, posterUrl: 'https://image.tmdb.org/t/p/w185/heat.jpg' },
-  ])
+  expect(await res.json()).toEqual({
+    movies: [
+      { tmdbId: 4, title: 'Alien', year: 1979, posterUrl: null },
+      { tmdbId: 3, title: 'Heat', year: 1995, posterUrl: 'https://image.tmdb.org/t/p/w185/heat.jpg' },
+    ],
+    total: 2,
+    matching: 2,
+    nextOffset: null,
+  })
 })
 
 test('Watched lists watched movies newest Watched date first', async () => {
@@ -141,7 +147,7 @@ test.each([UNFAVOURITE, TO_WATCH, DROP])('setting %j takes a movie off Favourite
   const c = await collection()
   await c.set(3, FAVOURITE)
   await c.set(3, change)
-  expect(await (await c.favourites()).json()).toEqual([])
+  expect(await ids(await c.favourites())).toEqual([])
 })
 
 test('a movie moved back from Watched counts as newly added', async () => {
@@ -157,7 +163,52 @@ test('dropped movies leave To watch', async () => {
   const c = await collection()
   await c.set(3, TO_WATCH)
   await c.set(3, DROP)
-  expect(await (await c.list('to_watch')).json()).toEqual([])
+  expect(await ids(await c.list('to_watch'))).toEqual([])
+})
+
+test('lists come in pages that pick up where the last one ended', async () => {
+  const c = await collection()
+  const count = PAGE_SIZE + 5
+  await c.app.db.insert(collectionEntry).values(
+    Array.from({ length: count }, (_, i) => ({
+      tmdbId: 100 + i,
+      title: `Movie ${i}`,
+      status: 'to_watch' as const,
+      // Every other pair shares a date, so pages rely on the tie-break.
+      addedAt: new Date(DAY1.getTime() + Math.floor(i / 2) * 1000),
+      favourite: false,
+    })),
+  )
+  const first = await (await c.list('to_watch')).json()
+  expect(first).toMatchObject({ total: count, matching: count, nextOffset: PAGE_SIZE })
+  expect(first.movies).toHaveLength(PAGE_SIZE)
+  const rest = await (await c.list('to_watch', `&offset=${first.nextOffset}`)).json()
+  expect(rest).toMatchObject({ total: count, nextOffset: null })
+  const seen = [...first.movies, ...rest.movies].map((m: { tmdbId: number }) => m.tmdbId)
+  expect(new Set(seen).size).toBe(count)
+})
+
+test('order=oldest lists oldest first', async () => {
+  const c = await collection()
+  await c.set(3, TO_WATCH)
+  vi.setSystemTime(DAY2)
+  await c.set(4, TO_WATCH)
+  expect(await ids(await c.list('to_watch', '&order=oldest'))).toEqual([3, 4])
+})
+
+test('title keeps titles containing it, and counts both the matches and the whole list', async () => {
+  const c = await collection()
+  await c.set(3, TO_WATCH)
+  await c.set(4, TO_WATCH)
+  await c.set(5, TO_WATCH)
+  const res = await (await c.list('to_watch', '&title=%20aLi%20')).json()
+  expect(res).toMatchObject({ total: 3, matching: 1, nextOffset: null })
+  expect(res.movies.map((m: { tmdbId: number }) => m.tmdbId)).toEqual([4])
+  expect(await ids(await c.list('to_watch', '&title=%25'))).toEqual([])
+})
+
+test.each(['order=sideways', 'offset=-1', 'offset=two'])('the page needs a valid query, not %j', async (query) => {
+  expect((await (await collection()).list('to_watch', `&${query}`)).status).toBe(400)
 })
 
 test.each(['status=someday', 'favourite=false', 'favourite=true&status=watched', ''])('the collection needs a known filter, not %j', async (query) => {
