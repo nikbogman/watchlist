@@ -31,7 +31,7 @@ export function fakeTmdb(movies: (Movie | MovieDetails)[] = []) {
 }
 
 // Booting and migrating Postgres is slow, so each test file does it once and every app gets a clone.
-const migrated = (async () => {
+const migrated = await (async () => {
   const client = new PGlite()
   await migrate(drizzle({ client }), { migrationsFolder: MIGRATIONS })
   return client
@@ -42,7 +42,7 @@ let ip = 0
 /** The app over a fresh in-memory database with the one account seeded. */
 export async function testApp(tmdb: Tmdb = fakeTmdb()) {
   ip++ // the rate limiter keys on client IP, so each app gets its own
-  const db = drizzle({ client: (await (await migrated).clone()) as PGlite, schema })
+  const db = drizzle({ client: (await migrated.clone()) as PGlite, schema })
   const app = createApp(db, tmdb)
   await seed(createAuth(db), EMAIL, PASSWORD)
 
