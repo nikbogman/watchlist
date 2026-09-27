@@ -7,10 +7,13 @@ function isStatus(value: unknown): value is Status {
   return STATUSES.includes(value as Status)
 }
 
-const statusQuery = validator('query', (query, c) => {
-  const { status } = query as { status?: unknown }
-  if (!isStatus(status)) {
-    return c.json({ error: `status must be one of ${STATUSES.join(', ')}` }, 400)
+const filterQuery = validator('query', (query, c) => {
+  const { status, favourite } = query as { status?: unknown; favourite?: unknown }
+  if (favourite === 'true' && status === undefined) {
+    return { favourite: true as const }
+  }
+  if (!isStatus(status) || favourite !== undefined) {
+    return c.json({ error: `filter by favourite=true or status, one of ${STATUSES.join(', ')}` }, 400)
   }
   return { status }
 })
@@ -33,9 +36,9 @@ const favouriteFlag = validator('json', (body, c) => {
 
 export function collectionRoutes(collection: Collection) {
   return new Hono()
-    .get('/', statusQuery, async (c) => {
-      const { status } = c.req.valid('query')
-      const movies = await collection.list(status)
+    .get('/', filterQuery, async (c) => {
+      const filter = c.req.valid('query')
+      const movies = await collection.list(filter)
       return c.json(movies)
     })
     .put('/:tmdbId/status', tmdbIdParam, statusOrNull, async (c) => {

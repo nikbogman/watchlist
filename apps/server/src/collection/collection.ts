@@ -6,6 +6,7 @@ import { orUnreachable, UNREACHABLE, type Tmdb } from '../tmdb/tmdb.js'
 
 export const STATUSES = collectionEntry.status.enumValues
 export type Status = (typeof STATUSES)[number]
+export type Filter = { status: Status } | { favourite: true }
 
 type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
 
@@ -89,15 +90,22 @@ export function createCollection(db: Db, tmdb: Tmdb) {
       return create(tmdbId, next)
     },
 
-    async list(status: Status) {
+    /** To watch and Watched filter by Status, Favourites by Favourite. Newest first. */
+    async list(filter: Filter) {
+      let where
       let newestFirst
-      if (status === 'to_watch') {
+      if ('favourite' in filter) {
+        where = eq(collectionEntry.favourite, true)
+        newestFirst = desc(collectionEntry.watchedAt)
+      } else if (filter.status === 'to_watch') {
+        where = eq(collectionEntry.status, filter.status)
         newestFirst = desc(collectionEntry.addedAt)
       } else {
+        where = eq(collectionEntry.status, filter.status)
         newestFirst = desc(collectionEntry.watchedAt)
       }
 
-      const entries = await db.select().from(collectionEntry).where(eq(collectionEntry.status, status)).orderBy(newestFirst)
+      const entries = await db.select().from(collectionEntry).where(where).orderBy(newestFirst)
       return entries.map(toRow)
     },
   }
