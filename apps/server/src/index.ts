@@ -12,6 +12,6 @@ const app = createApp(
 )
 
 // 0.0.0.0 so a phone running Expo Go can reach it over the LAN.
-serve({ fetch: app.fetch, port: 3000, hostname: '0.0.0.0' }, (info) => {
+serve({ fetch: app.fetch, port: Number(process.env.PORT ?? 3000), hostname: '0.0.0.0' }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
 })
