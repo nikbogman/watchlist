@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { authClient } from '@/auth-client'
 import { colors, fonts } from '@/theme'
@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string>()
   const [pending, setPending] = useState(false)
+  const passwordRef = useRef<TextInput>(null)
 
   async function logIn() {
     setPending(true)
@@ -20,53 +21,62 @@ export default function Login() {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.brand}>
-        <Text style={styles.name}>Watcher</Text>
-        <Text style={styles.tagline}>Your private movie log.</Text>
-      </View>
-      <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoComplete="email"
-            keyboardType="email-address"
-            textContentType="username"
-            accessibilityLabel="Email"
-          />
+    // Edge-to-edge Android no longer resizes the window for the keyboard, so pad on both platforms.
+    <KeyboardAvoidingView style={styles.fill} behavior="padding">
+      <ScrollView contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
+        <View style={styles.brand}>
+          <Text style={styles.name}>Watcher</Text>
+          <Text style={styles.tagline}>Your private movie log.</Text>
         </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="current-password"
-            textContentType="password"
-            onSubmitEditing={logIn}
-            accessibilityLabel="Password"
-          />
+        <View style={styles.form}>
+          <View style={styles.field}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={styles.input}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoComplete="email"
+              keyboardType="email-address"
+              textContentType="username"
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              accessibilityLabel="Email"
+            />
+          </View>
+          <View style={styles.field}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              ref={passwordRef}
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="current-password"
+              textContentType="password"
+              returnKeyType="go"
+              onSubmitEditing={logIn}
+              accessibilityLabel="Password"
+            />
+          </View>
+          {error && <Text style={styles.error}>{error}</Text>}
+          <Pressable
+            style={[styles.button, pending && { opacity: 0.6 }]}
+            onPress={logIn}
+            disabled={pending || !email || !password}
+            accessibilityRole="button">
+            <Text style={styles.buttonText}>Log in</Text>
+          </Pressable>
         </View>
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Pressable
-          style={[styles.button, pending && { opacity: 0.6 }]}
-          onPress={logIn}
-          disabled={pending || !email || !password}
-          accessibilityRole="button">
-          <Text style={styles.buttonText}>Log in</Text>
-        </Pressable>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, justifyContent: 'center', gap: 48, paddingHorizontal: 28, backgroundColor: colors.background },
+  fill: { flex: 1, backgroundColor: colors.background },
+  screen: { flexGrow: 1, justifyContent: 'center', gap: 48, paddingHorizontal: 28, paddingVertical: 24 },
   brand: { gap: 8 },
   name: { fontFamily: fonts.title, fontSize: 48, letterSpacing: -0.5, color: colors.text },
   tagline: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted },
