@@ -23,25 +23,29 @@ const yearOf = (date?: string) => (date ? Number(date.slice(0, 4)) : null)
 
 export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch): Tmdb {
   async function get<T>(path: string, params: Record<string, string> = {}): Promise<T | null> {
-    const res = await fetchFn(`${API}${path}?${new URLSearchParams({ ...params, api_key: apiKey })}`).catch((e: unknown) => {
-      throw new TmdbUnreachable(e)
-    })
+    const res = await fetchFn(`${API}${path}?${new URLSearchParams({ ...params, api_key: apiKey })}`)
     if (res.status === 404) return null
-    if (!res.ok) throw new TmdbUnreachable(new Error(`TMDB ${path} failed with ${res.status}`))
+    if (!res.ok) throw new Error(`TMDB ${path} failed with ${res.status}`)
     return res.json() as Promise<T>
   }
 
+  // Network errors, error statuses and bodies that aren't what TMDB documents all mean TMDB can't serve us.
+  const unreachable = <A extends unknown[], R>(call: (...args: A) => Promise<R>) =>
+    (...args: A) => call(...args).catch((e: unknown) => {
+      throw e instanceof TmdbUnreachable ? e : new TmdbUnreachable(e)
+    })
+
   return {
-    async search(query) {
+    search: unreachable(async (query: string) => {
       const { results } = (await get<{ results: TmdbMovie[] }>('/search/movie', { query, include_adult: 'false' }))!
       return results
         .filter((m) => !m.adult)
         .map((m) => ({ tmdbId: m.id, title: m.title, year: yearOf(m.release_date), posterPath: m.poster_path }))
-    },
-    async details(tmdbId) {
+    }),
+    details: unreachable(async (tmdbId: number) => {
       const m = await get<TmdbMovie>(`/movie/${tmdbId}`)
       if (!m) return null
       return { tmdbId: m.id, title: m.title, year: yearOf(m.release_date), posterPath: m.poster_path, overview: m.overview ?? '' }
-    },
+    }),
   }
 }

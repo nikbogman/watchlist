@@ -60,3 +60,9 @@ test('a network failure is TmdbUnreachable too', async () => {
   }) as unknown as typeof fetch
   await expect(createTmdbClient('KEY', offline).search('heat')).rejects.toThrow(TmdbUnreachable)
 })
+
+test('a malformed TMDB response is TmdbUnreachable too', async () => {
+  const garbled = (async () => new Response('<html>', { status: 200 })) as unknown as typeof fetch
+  await expect(createTmdbClient('KEY', garbled).details(1)).rejects.toThrow(TmdbUnreachable)
+  await expect(createTmdbClient('KEY', stubFetch({})).search('heat')).rejects.toThrow(TmdbUnreachable)
+})
