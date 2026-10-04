@@ -3,7 +3,10 @@ import { pgTable, text, integer, jsonb, timestamp, uuid, check } from 'drizzle-o
 
 /** createdAt is an ISO date string, so a reel reads back from the jsonb column unchanged. */
 export type Comment = { author: string; text: string; likes: number; createdAt: string }
-export type Reel = { url: string; description: string | null; comments: Comment[] }
+/** What the reel shows. tmdbId is null for TV shows and for movies TMDB doesn't know. */
+export type Title = { name: string; year: number | null; kind: 'movie' | 'tv'; tmdbId: number | null }
+/** title: undefined = not identified yet; null = the reel doesn't say what it shows. */
+export type Reel = { url: string; description: string | null; comments: Comment[]; title?: Title | null }
 
 // The reel scrape queue: each row is a job and, once done, its result.
 export const reelScrape = pgTable(
