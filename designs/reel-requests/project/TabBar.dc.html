@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tab bar</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<nav aria-label="Main" style="width: 390px; height: 84px; box-sizing: border-box; padding-bottom: 22px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); background: #1C1A15; border-top: 1px solid #2E2A23; font-family: 'Instrument Sans', sans-serif; color: #8E8677">
+<a href="Requests.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 11px; font-weight: 600; color: {{c.search}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+<span>Search</span>
+</a>
+<a href="Requests.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 11px; font-weight: 600; color: {{c.toWatch}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"></path></svg>
+<span>To watch</span>
+</a>
+<a href="Requests.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 11px; font-weight: 600; color: {{c.watched}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path></svg>
+<span>Watched</span>
+</a>
+<a href="Requests.dc.html" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 11px; font-weight: 600; color: {{c.favourites}}">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>
+<span>Favourites</span>
+</a>
+<a href="Requests.dc.html" aria-label="{{requestsLabel}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-decoration: none; font-size: 11px; font-weight: 600; color: {{c.requests}}">
+<span style="position: relative; display: flex">
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2.5-8h11L20 13v6H4z"></path><path d="M4 13h4.5l1 2.5h5l1-2.5H20"></path></svg>
+<sc-if value="{{busy}}" hint-placeholder-val="{{ true }}">
+<span style="position: absolute; top: -2px; right: -4px; width: 9px; height: 9px; border-radius: 5px; background: #E8A33D; border: 2px solid #1C1A15"></span>
+</sc-if>
+</span>
+<span>Requests</span>
+</a>
+</nav>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["search","toWatch","watched","favourites","requests"],"default":"requests"},"busy":{"editor":"boolean","default":true},"$preview":{"width":390,"height":84}}'>
+class Component extends DCLogic {
+renderVals() {
+const a = this.props.active ?? 'requests';
+const busy = this.props.busy ?? true;
+const on = '#E8A33D', off = '#8E8677';
+return {
+busy,
+requestsLabel: busy ? 'Requests, some in progress' : 'Requests',
+c: {
+search: a === 'search' ? on : off,
+toWatch: a === 'toWatch' ? on : off,
+watched: a === 'watched' ? on : off,
+favourites: a === 'favourites' ? on : off,
+requests: a === 'requests' ? on : off,
+},
+};
+}
+}
+</script>
+</body>
+</html>

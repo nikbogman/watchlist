@@ -32,3 +32,7 @@ _Avoid:_ like, liked
 
 **Favourites**
 The screen showing every favourite. A view, not a list movies are added to.
+
+**Request**
+A reel I shared to the app (from Instagram's Share button, or by pasting its link) to find out which movie or TV show it shows. Sharing the same reel again is the same Request. It is _in progress_ until the reel is read, then _found_, _not found_ or _failed_; a failed one can be retried. Signed out, a shared reel waits for sign-in and is dropped if I leave the app first.
+_Avoid:_ scrape, job (those are the server's words for how a Request is worked on)

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Requests, empty</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#16140F}
+a{color:#E8A33D}a:hover{color:#F2B85A}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; display: flex; flex-direction: column; background: #16140F; color: #F2EDE3; font-family: 'Instrument Sans', sans-serif; overflow: hidden">
+<header style="padding: 64px 20px 12px; display: flex; flex-direction: column; gap: 4px">
+<h1 style="margin: 0; font-family: Fraunces, serif; font-size: 34px; font-weight: 600">Requests</h1>
+<p style="margin: 0; font-size: 14px; color: #A39B8C">Reels you shared from Instagram.</p>
+</header>
+<main style="flex-grow: 1; padding: 0 36px; display: flex; flex-direction: column; justify-content: center; gap: 24px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<h2 style="margin: 0; font-family: Fraunces, serif; font-size: 24px; font-weight: 600">No requests yet</h2>
+<p style="margin: 0; font-size: 15px; line-height: 1.55; color: #A39B8C">Spot a movie or show in a reel? Send it here and popcorn will name it.</p>
+</div>
+<ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+<li style="display: flex; gap: 14px; align-items: center; font-size: 15px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 14px; border: 1px solid #4A443A; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #E8A33D">1</span>
+<span>In Instagram, tap Share on a reel</span>
+</li>
+<li style="display: flex; gap: 14px; align-items: center; font-size: 15px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 14px; border: 1px solid #4A443A; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #E8A33D">2</span>
+<span>Pick popcorn from the share list</span>
+</li>
+<li style="display: flex; gap: 14px; align-items: center; font-size: 15px">
+<span style="width: 28px; height: 28px; flex-shrink: 0; border-radius: 14px; border: 1px solid #4A443A; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: #E8A33D">3</span>
+<span>The title shows up here</span>
+</li>
+</ol>
+</main>
+<dc-import name="TabBar" active="requests" busy="{{ false }}" hint-size="390px,84px"></dc-import>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
