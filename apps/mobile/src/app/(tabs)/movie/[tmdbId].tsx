@@ -22,7 +22,16 @@ export default function Movie() {
     <View style={styles.screen}>
       <View style={{ paddingTop: top + 8, paddingHorizontal: 8 }}>
         <Pressable style={styles.back} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back">
-          <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <Svg
+            width={22}
+            height={22}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={colors.accent}
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <Path d="M15 5l-7 7 7 7" />
           </Svg>
           <Text style={styles.backText}>Back</Text>
@@ -60,10 +69,20 @@ export default function Movie() {
       )}
       {movie.isSuccess && (
         <View style={styles.buttons} accessibilityLabel="Your collection">
-          <ToggleButton label="To watch" on={movie.data.status === 'to_watch'} disabled={toggle.isPending} onPress={() => toggleStatus('to_watch')}>
+          <ToggleButton
+            label="To watch"
+            on={movie.data.status === 'to_watch'}
+            disabled={toggle.isPending}
+            onPress={() => toggleStatus('to_watch')}
+          >
             <Path d="M6 4h12v17l-6-4-6 4z" />
           </ToggleButton>
-          <ToggleButton label="Watched" on={movie.data.status === 'watched'} disabled={toggle.isPending} onPress={() => toggleStatus('watched')}>
+          <ToggleButton
+            label="Watched"
+            on={movie.data.status === 'watched'}
+            disabled={toggle.isPending}
+            onPress={() => toggleStatus('watched')}
+          >
             <Circle cx={12} cy={12} r={9} />
             <Path d="M8 12.5l2.5 2.5L16 9.5" />
           </ToggleButton>
@@ -86,8 +105,18 @@ function ToggleButton({ label, on, disabled, onPress, children }: ToggleButtonPr
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="togglebutton"
-      accessibilityState={{ checked: on, disabled }}>
-      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={fg} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      accessibilityState={{ checked: on, disabled }}
+    >
+      <Svg
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={fg}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
         {children}
       </Svg>
       <Text style={[styles.buttonText, { color: fg }]}>{label}</Text>
@@ -101,7 +130,14 @@ const styles = StyleSheet.create({
   backText: { fontFamily: fonts.medium, fontSize: 16, color: colors.accent },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, gap: 16 },
   message: { fontFamily: fonts.regular, fontSize: 16, color: colors.muted, textAlign: 'center' },
-  retry: { height: 44, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1, borderColor: colors.buttonBorder, justifyContent: 'center' },
+  retry: {
+    height: 44,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.buttonBorder,
+    justifyContent: 'center',
+  },
   retryText: { fontFamily: fonts.semibold, fontSize: 15, color: colors.text },
   body: { paddingTop: 12, paddingHorizontal: 20, paddingBottom: 20, gap: 24 },
   hero: { flexDirection: 'row', alignItems: 'flex-end', gap: 18 },

@@ -44,7 +44,10 @@ export function useSetEntry(tmdbId: string, { onError }: { onError: () => void }
           : entryEndpoint.favourite.$put({ param: { tmdbId }, json: change }),
       ),
     onSuccess: (entry) => {
-      queryClient.setQueryData(keys.movie(tmdbId), (old: InferResponseType<typeof movieEndpoint, 200> | undefined) => old && { ...old, ...entry })
+      queryClient.setQueryData(
+        keys.movie(tmdbId),
+        (old: InferResponseType<typeof movieEndpoint, 200> | undefined) => old && { ...old, ...entry },
+      )
       queryClient.invalidateQueries({ queryKey: keys.lists })
     },
     onError,

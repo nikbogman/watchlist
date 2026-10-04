@@ -20,14 +20,14 @@ Take a movie out of the collection. Its entry, with its Status, Watched date and
 _Avoid:_ untrack, remove, delete
 
 **Status**
-Either *To watch* or *Watched*, never both. Marking a movie *Watched* takes it off *To watch*. Unmarking *Watched* drops the movie; it does not fall back to *To watch*. Rewatches are not recorded.
+Either _To watch_ or _Watched_, never both. Marking a movie _Watched_ takes it off _To watch_. Unmarking _Watched_ drops the movie; it does not fall back to _To watch_. Rewatches are not recorded.
 _Avoid:_ Watching (no longer a Status)
 
 **Watched date**
-The day a movie was marked *Watched*. Set automatically, not editable. For films seen long ago, it is the day they were logged.
+The day a movie was marked _Watched_. Set automatically, not editable. For films seen long ago, it is the day they were logged.
 
 **Favourite**
-A mark on a watched movie meaning I liked it. Only watched movies can be favourites, so unmarking *Watched* also clears the favourite. Favouriting an unwatched movie marks it *Watched* too. Not a status.
+A mark on a watched movie meaning I liked it. Only watched movies can be favourites, so unmarking _Watched_ also clears the favourite. Favouriting an unwatched movie marks it _Watched_ too. Not a status.
 _Avoid:_ like, liked
 
 **Favourites**

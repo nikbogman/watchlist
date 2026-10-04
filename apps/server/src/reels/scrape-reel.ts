@@ -36,7 +36,12 @@ export async function scrapeReel(context: BrowserContext, url: string, opts: { m
           hasNextPage = connection.page_info?.has_next_page ?? hasNextPage
           for (const { node: c } of connection.edges ?? []) {
             if (c.parent_comment_id) continue
-            comments.set(c.pk, { author: c.user.username, text: c.text, likes: c.comment_like_count ?? 0, createdAt: new Date(c.created_at * 1000).toISOString() })
+            comments.set(c.pk, {
+              author: c.user.username,
+              text: c.text,
+              likes: c.comment_like_count ?? 0,
+              createdAt: new Date(c.created_at * 1000).toISOString(),
+            })
           }
         })
       }
@@ -64,7 +69,7 @@ export async function scrapeReel(context: BrowserContext, url: string, opts: { m
     })
     if (panelCenter) await page.mouse.move(panelCenter.x, panelCenter.y)
     // Stops after 10s with no new comments in case Instagram stalls without saying it's on the last page.
-    for (let idle = 0; panelCenter && hasNextPage && comments.size < maxComments && idle < 20; ) {
+    for (let idle = 0; panelCenter && hasNextPage && comments.size < maxComments && idle < 20;) {
       const before = comments.size
       await page.mouse.wheel(0, 2000)
       await page.waitForTimeout(500)
@@ -77,7 +82,10 @@ export async function scrapeReel(context: BrowserContext, url: string, opts: { m
       // undefined = caption not seen in any payload; null = the reel has no caption
       description:
         description === undefined
-          ? await page.locator('meta[property="og:description"]').getAttribute('content').catch(() => null)
+          ? await page
+              .locator('meta[property="og:description"]')
+              .getAttribute('content')
+              .catch(() => null)
           : description,
       comments: [...comments.values()].slice(0, maxComments),
     }

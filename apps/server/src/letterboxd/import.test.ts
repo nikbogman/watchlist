@@ -6,7 +6,9 @@ import { parseCsv } from './import.js'
 const HEADER = 'Date,Name,Year,Letterboxd URI'
 
 test('quoted names keep their commas and quotes', () => {
-  expect(parseCsv(`${HEADER}\r\n2026-01-01,"Crouching Tiger, Hidden Dragon",2000,u1\r\n2026-01-01,"The ""Best"" Film",1999,u2\r\n`)).toEqual([
+  expect(
+    parseCsv(`${HEADER}\r\n2026-01-01,"Crouching Tiger, Hidden Dragon",2000,u1\r\n2026-01-01,"The ""Best"" Film",1999,u2\r\n`),
+  ).toEqual([
     { Date: '2026-01-01', Name: 'Crouching Tiger, Hidden Dragon', Year: '2000', 'Letterboxd URI': 'u1' },
     { Date: '2026-01-01', Name: 'The "Best" Film', Year: '1999', 'Letterboxd URI': 'u2' },
   ])
@@ -23,7 +25,10 @@ function form(password: string) {
   const body = new FormData()
   body.set('email', EMAIL)
   body.set('password', password)
-  body.set('watchlist', new File([`${HEADER}\n2026-01-01,Alien,1979,alien\n2026-01-01,Heat,1995,heat\n2026-01-01,Nowhere,2000,nowhere\n`], 'watchlist.csv'))
+  body.set(
+    'watchlist',
+    new File([`${HEADER}\n2026-01-01,Alien,1979,alien\n2026-01-01,Heat,1995,heat\n2026-01-01,Nowhere,2000,nowhere\n`], 'watchlist.csv'),
+  )
   body.set('watched', new File([`${HEADER}\n2026-02-01,Heat,1995,heat\n2026-02-02,Ran,1985,ran\n`], 'watched.csv'))
   body.set('likes', new File([`${HEADER}\n2026-03-01,Ran,1985,ran\n`], 'films.csv'))
   return body

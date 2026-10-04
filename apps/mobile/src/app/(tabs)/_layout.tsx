@@ -8,7 +8,16 @@ import { colors, fonts } from '@/theme'
 
 function Icon({ color, children }: { color: ColorValue; children: ReactNode }) {
   return (
-    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+    <Svg
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       {children}
     </Svg>
   )
@@ -33,7 +42,8 @@ export default function TabsLayout() {
           paddingBottom: bottom,
         },
         tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{

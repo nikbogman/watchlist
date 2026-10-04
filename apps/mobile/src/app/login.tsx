@@ -72,7 +72,8 @@ export default function Login() {
             style={[styles.button, pending && { opacity: 0.6 }]}
             onPress={logIn}
             disabled={pending || !email || !password}
-            accessibilityRole="button">
+            accessibilityRole="button"
+          >
             <Text style={styles.buttonText}>Log in</Text>
           </Pressable>
         </View>

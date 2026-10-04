@@ -16,7 +16,16 @@ export function SearchField({
 }) {
   return (
     <View style={styles.field}>
-      <Svg style={styles.icon} width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.muted} strokeWidth={1.8} strokeLinecap="round">
+      <Svg
+        style={styles.icon}
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={colors.muted}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      >
         <Circle cx={11} cy={11} r={7} />
         <Path d="M20 20l-4-4" />
       </Svg>

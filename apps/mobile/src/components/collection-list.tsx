@@ -35,11 +35,7 @@ export function CollectionList({ title, filter, empty }: { title: string; filter
       ) : (
         <>
           <SearchField value={text} onChangeText={setText} placeholder="Filter by title" label={`Filter ${title} by title`} />
-          <Pressable
-            style={styles.sort}
-            onPress={() => setOldestFirst(!oldestFirst)}
-            accessibilityRole="button"
-            hitSlop={8}>
+          <Pressable style={styles.sort} onPress={() => setOldestFirst(!oldestFirst)} accessibilityRole="button" hitSlop={8}>
             <Text style={styles.sortText}>{oldestFirst ? 'Oldest first' : 'Newest first'}</Text>
           </Pressable>
           <FlatList

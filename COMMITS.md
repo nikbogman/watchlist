@@ -16,26 +16,26 @@ Only the first line is required.
 
 ## Type
 
-| Type | Use for |
-|---|---|
-| `feat` | A new user-facing capability |
-| `fix` | A bug fix |
+| Type       | Use for                                                   |
+| ---------- | --------------------------------------------------------- |
+| `feat`     | A new user-facing capability                              |
+| `fix`      | A bug fix                                                 |
 | `refactor` | A code change that neither adds a feature nor fixes a bug |
-| `test` | Adding or changing tests only |
-| `docs` | Documentation only (PRDs, CONTEXT.md, READMEs) |
-| `chore` | Dependencies, config, tooling, scaffolding |
-| `perf` | A performance improvement |
-| `style` | Formatting only, with no behaviour change |
+| `test`     | Adding or changing tests only                             |
+| `docs`     | Documentation only (PRDs, CONTEXT.md, READMEs)            |
+| `chore`    | Dependencies, config, tooling, scaffolding                |
+| `perf`     | A performance improvement                                 |
+| `style`    | Formatting only, with no behaviour change                 |
 
 ## Scope
 
 The part of the workspace the commit touches:
 
-| Scope | Covers |
-|---|---|
-| `mobile` | `apps/mobile` |
-| `server` | `apps/server` |
-| `repo` | Root config, workspace setup, and agent tooling (`.claude/`, `.mcp.json`) |
+| Scope    | Covers                                                                    |
+| -------- | ------------------------------------------------------------------------- |
+| `mobile` | `apps/mobile`                                                             |
+| `server` | `apps/server`                                                             |
+| `repo`   | Root config, workspace setup, and agent tooling (`.claude/`, `.mcp.json`) |
 
 Leave out the scope if a commit spans both apps. Split the commit instead when the changes are unrelated.
 
@@ -44,7 +44,7 @@ Leave out the scope if a commit spans both apps. Split the commit instead when t
 - Imperative mood: "add", not "added" or "adds".
 - Lowercase, and no full stop at the end.
 - 72 characters or fewer for the whole first line.
-- Use the domain terms from [CONTEXT.md](CONTEXT.md): *To watch*, *Watched*, *Favourite*, *Entry*, *Collection*, *Drop*.
+- Use the domain terms from [CONTEXT.md](CONTEXT.md): _To watch_, _Watched_, _Favourite_, _Entry_, _Collection_, _Drop_.
 
 ## Body
 

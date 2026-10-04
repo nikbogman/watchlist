@@ -48,9 +48,9 @@ The app downloads the update on launch and runs it on the next launch. Fully clo
 
 ### Update or rebuild?
 
-| Change | Ship with |
-| --- | --- |
-| JS/TS, styles, images, fonts | `eas update` |
+| Change                                                                              | Ship with                               |
+| ----------------------------------------------------------------------------------- | --------------------------------------- |
+| JS/TS, styles, images, fonts                                                        | `eas update`                            |
 | New package with native code, `app.json` plugins or native config, Expo SDK upgrade | New `eas build`, then reinstall the APK |
 
 An update only reaches builds with the same runtime version, which is `version` in `app.json` here. Native changes aren't detected automatically, so after a native change bump `version` and rebuild. Otherwise the old APK installs JS that calls native code it doesn't have, and crashes.

@@ -211,10 +211,13 @@ test.each(['order=sideways', 'offset=-1', 'offset=two'])('the page needs a valid
   expect((await (await collection()).list('to_watch', `&${query}`)).status).toBe(400)
 })
 
-test.each(['status=someday', 'favourite=false', 'favourite=true&status=watched', ''])('the collection needs a known filter, not %j', async (query) => {
-  const c = await collection()
-  expect((await c.app.request(`/api/collection?${query}`, { cookie: c.cookie })).status).toBe(400)
-})
+test.each(['status=someday', 'favourite=false', 'favourite=true&status=watched', ''])(
+  'the collection needs a known filter, not %j',
+  async (query) => {
+    const c = await collection()
+    expect((await c.app.request(`/api/collection?${query}`, { cookie: c.cookie })).status).toBe(400)
+  },
+)
 
 test.each([TO_WATCH, FAVOURITE])('creating an entry with %j returns 404 for an unknown movie', async (change) => {
   expect((await (await collection()).set(99, change)).status).toBe(404)

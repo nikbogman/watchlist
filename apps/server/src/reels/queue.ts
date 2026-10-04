@@ -32,10 +32,7 @@ export async function runNext(db: Db, scrape: Scrape) {
     .update(reelScrape)
     .set({ status: 'running', updatedAt: new Date() })
     .where(
-      eq(
-        reelScrape.id,
-        sql`(select id from ${reelScrape} where status = 'queued' order by created_at limit 1 for update skip locked)`,
-      ),
+      eq(reelScrape.id, sql`(select id from ${reelScrape} where status = 'queued' order by created_at limit 1 for update skip locked)`),
     )
     .returning({ id: reelScrape.id, url: reelScrape.url })
   if (!job) return false
@@ -44,7 +41,10 @@ export async function runNext(db: Db, scrape: Scrape) {
     (reel) => ({ status: 'done' as const, reel }),
     (e: unknown) => ({ status: 'failed' as const, error: e instanceof Error ? e.message : String(e) }),
   )
-  await db.update(reelScrape).set({ ...result, updatedAt: new Date() }).where(eq(reelScrape.id, job.id))
+  await db
+    .update(reelScrape)
+    .set({ ...result, updatedAt: new Date() })
+    .where(eq(reelScrape.id, job.id))
   return true
 }
 

@@ -23,12 +23,12 @@ Results of the prototype from [#14](https://github.com/nikbogman/watchlist/issue
 These runs scraped one reel, [itsjustcinema](https://www.instagram.com/p/DNBbfSkMPuy/), which has about 1,000 comments, about 750 of them top-level.
 
 | `maxComments` | 1.5s wait per scroll | 0.5s wait per scroll (current) |
-|---|---|---|
-| 10 | 10 in 5.8s | – |
-| 50 | 50 in 9.1s | 50 in 6–7s |
-| 200 (default) | 200 in 25.6s | 200 in 12–15s |
-| 500 | 500 in 57.4s | 494 in 28–33s |
-| 2000 | – | 749 (all top-level) in 32.8s |
+| ------------- | -------------------- | ------------------------------ |
+| 10            | 10 in 5.8s           | –                              |
+| 50            | 50 in 9.1s           | 50 in 6–7s                     |
+| 200 (default) | 200 in 25.6s         | 200 in 12–15s                  |
+| 500           | 500 in 57.4s         | 494 in 28–33s                  |
+| 2000          | –                    | 749 (all top-level) in 32.8s   |
 
 - **Startup takes about 5–6 seconds:** launching the browser, loading the page and waiting for the network to go quiet. Up to ~14 comments cost nothing extra.
 - **Scrolling adds about 15–20 comments per second** with the current 0.5s wait.
@@ -44,10 +44,10 @@ await Promise.all(urls.map((url) => scrapeReel(url, { maxComments: 100 })))
 
 Measured on 3 reels with `maxComments: 100`:
 
-| Mode | Time |
-|---|---|
-| One after another | 52.1s |
-| In parallel | 22.6s (about 2.3× faster) |
+| Mode              | Time                      |
+| ----------------- | ------------------------- |
+| One after another | 52.1s                     |
+| In parallel       | 22.6s (about 2.3× faster) |
 
 - **Memory:** each parallel call was a full Chromium process, roughly 200–300 MB of RAM. The server now shares one browser, with a fresh context per reel, and scrapes one reel at a time.
 - **Account risk:** several parallel sessions on one account look the most like a bot. Keep it to 2–3 at a time.

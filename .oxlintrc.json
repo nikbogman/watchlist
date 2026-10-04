@@ -1,21 +1,11 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "typescript",
-    "unicorn",
-    "oxc",
-    "import",
-    "react",
-    "vitest"
-  ],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "react", "vitest"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn"
   },
-  "ignorePatterns": [
-    "apps/server/drizzle/**",
-    "**/dist/**"
-  ],
+  "ignorePatterns": ["apps/server/drizzle/**", "**/dist/**"],
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react/style-prop-object": "off",

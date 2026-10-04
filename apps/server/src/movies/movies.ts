@@ -11,6 +11,11 @@ export type MovieSummary = Omit<Movie, 'posterPath'> & { posterUrl: string | nul
 
 const posterUrl = (path: string | null, use: keyof typeof SIZES) => (path ? `${IMAGES}/${SIZES[use]}${path}` : null)
 
-export const toRow = ({ tmdbId, title, year, posterPath }: Movie): MovieSummary => ({ tmdbId, title, year, posterUrl: posterUrl(posterPath, 'row') })
+export const toRow = ({ tmdbId, title, year, posterPath }: Movie): MovieSummary => ({
+  tmdbId,
+  title,
+  year,
+  posterUrl: posterUrl(posterPath, 'row'),
+})
 
 export const toPage = ({ posterPath, ...m }: MovieDetails) => ({ ...m, posterUrl: posterUrl(posterPath, 'page') })

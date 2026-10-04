@@ -23,7 +23,8 @@ export function MovieRow({ movie }: { movie: MovieSummary }) {
     <Pressable
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}
       onPress={() => router.push({ pathname: '/movie/[tmdbId]', params: { tmdbId: movie.tmdbId } })}
-      accessibilityRole="button">
+      accessibilityRole="button"
+    >
       <Poster movie={movie} style={styles.poster} />
       <View style={styles.text}>
         <Text style={styles.title} numberOfLines={2}>
