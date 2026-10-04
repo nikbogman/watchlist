@@ -1,5 +1,5 @@
-import type { Collection, NewEntry } from '../collection/collection.js'
-import type { Tmdb } from '../tmdb/tmdb.js'
+import type { Collection, NewEntry } from '../collection/collection'
+import type { Tmdb } from '../tmdb/tmdb'
 
 /** Rows of a Letterboxd export CSV, keyed by header. Handles quoted fields ("Crouching Tiger, Hidden Dragon"). */
 export function parseCsv(text: string) {

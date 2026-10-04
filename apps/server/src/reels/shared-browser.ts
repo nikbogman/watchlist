@@ -1,8 +1,8 @@
 import { chromium, type Browser, type BrowserContextOptions } from 'playwright'
-import type { Db } from '../db.js'
-import { instagramSession } from './schema.js'
-import type { Scrape } from './queue.js'
-import { LOGIN_HINT, scrapeReel } from './scrape-reel.js'
+import type { Db } from '../db'
+import { instagramSession } from './schema'
+import type { Scrape } from './queue'
+import { LOGIN_HINT, scrapeReel } from './scrape-reel'
 
 let browser: Promise<Browser> | undefined
 

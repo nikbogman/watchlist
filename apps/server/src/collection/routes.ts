@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { validator } from 'hono/validator'
-import { found, tmdbIdParam } from '../http.js'
-import { STATUSES, type Collection, type Status } from './collection.js'
+import { found, tmdbIdParam } from '../http'
+import { STATUSES, type Collection, type Status } from './collection'
 
 function isStatus(value: unknown): value is Status {
   return STATUSES.includes(value as Status)

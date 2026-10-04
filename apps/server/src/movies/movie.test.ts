@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { fakeTmdb, testApp } from '../test/test-app.js'
+import { fakeTmdb, testApp } from '../test/test-app'
 
 const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg', overview: 'A heist.' }
 

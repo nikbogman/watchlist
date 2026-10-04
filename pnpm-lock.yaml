@@ -311,6 +311,9 @@ importers:
       playwright:
         specifier: ^1.63.0
         version: 1.63.0
+      tsx:
+        specifier: ^4.23.0
+        version: 4.23.15
     devDependencies:
       '@electric-sql/pglite':
         specifier: ^0.5.8
@@ -324,9 +327,6 @@ importers:
       drizzle-kit:
         specifier: ^0.31.11
         version: 0.31.11
-      tsx:
-        specifier: ^4.23.0
-        version: 4.23.15
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

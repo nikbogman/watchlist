@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createTmdbClient, TmdbUnreachable } from './tmdb.js'
+import { createTmdbClient, TmdbUnreachable } from './tmdb'
 
 const stubFetch = (body: unknown, status = 200) =>
   (async (url: string) => {

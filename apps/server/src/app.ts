@@ -1,14 +1,14 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { createAuth } from './auth/auth.js'
-import { createCollection } from './collection/collection.js'
-import { collectionRoutes } from './collection/routes.js'
-import type { Db } from './db.js'
-import { letterboxdRoutes } from './letterboxd/routes.js'
-import { movieRoutes } from './movies/routes.js'
-import { createReelQueue } from './reels/queue.js'
-import { reelRoutes } from './reels/routes.js'
-import { TmdbUnreachable, type Tmdb } from './tmdb/tmdb.js'
+import { createAuth } from './auth/auth'
+import { createCollection } from './collection/collection'
+import { collectionRoutes } from './collection/routes'
+import type { Db } from './db'
+import { letterboxdRoutes } from './letterboxd/routes'
+import { movieRoutes } from './movies/routes'
+import { createReelQueue } from './reels/queue'
+import { reelRoutes } from './reels/routes'
+import { TmdbUnreachable, type Tmdb } from './tmdb/tmdb'
 
 export function createApp(db: Db, tmdb: Tmdb) {
   const auth = createAuth(db)

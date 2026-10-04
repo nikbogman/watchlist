@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { validator } from 'hono/validator'
-import type { ReelQueue } from './queue.js'
+import type { ReelQueue } from './queue'
 
 const NOT_A_REEL = { error: 'url must be an Instagram reel or post URL' }
 

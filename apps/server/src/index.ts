@@ -1,9 +1,9 @@
 import { serve } from '@hono/node-server'
-import { createApp } from './app.js'
-import { createDb } from './db.js'
-import { createReelQueue } from './reels/queue.js'
-import { scrapeWithSharedBrowser } from './reels/shared-browser.js'
-import { createTmdbClient } from './tmdb/tmdb.js'
+import { createApp } from './app'
+import { createDb } from './db'
+import { createReelQueue } from './reels/queue'
+import { scrapeWithSharedBrowser } from './reels/shared-browser'
+import { createTmdbClient } from './tmdb/tmdb'
 
 if (!process.env.TMDB_API_KEY) throw new Error('Set TMDB_API_KEY')
 if (!process.env.DATABASE_URL) throw new Error('Set DATABASE_URL')

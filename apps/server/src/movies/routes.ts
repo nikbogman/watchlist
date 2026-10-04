@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 import { validator } from 'hono/validator'
-import type { Collection } from '../collection/collection.js'
-import { found, tmdbIdParam } from '../http.js'
-import type { Tmdb } from '../tmdb/tmdb.js'
-import { toPage, toRow } from './movies.js'
+import type { Collection } from '../collection/collection'
+import { found, tmdbIdParam } from '../http'
+import type { Tmdb } from '../tmdb/tmdb'
+import { toPage, toRow } from './movies'
 
 export const movieRoutes = (tmdb: Tmdb, collection: Collection) =>
   new Hono()

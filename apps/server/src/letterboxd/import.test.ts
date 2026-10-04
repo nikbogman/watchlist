@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
-import { collectionEntry } from '../collection/schema.js'
-import { EMAIL, PASSWORD, fakeTmdb, testApp } from '../test/test-app.js'
-import { parseCsv } from './import.js'
+import { collectionEntry } from '../collection/schema'
+import { EMAIL, PASSWORD, fakeTmdb, testApp } from '../test/test-app'
+import { parseCsv } from './import'
 
 const HEADER = 'Date,Name,Year,Letterboxd URI'
 

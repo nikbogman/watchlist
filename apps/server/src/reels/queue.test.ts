@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { testApp } from '../test/test-app.js'
-import type { Reel } from './schema.js'
-import { createReelQueue } from './queue.js'
+import { testApp } from '../test/test-app'
+import type { Reel } from './schema'
+import { createReelQueue } from './queue'
 
 const URL = 'https://www.instagram.com/reel/DNBbfSkMPuy/'
 const REEL: Reel = {

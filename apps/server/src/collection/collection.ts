@@ -1,8 +1,8 @@
 import { and, asc, desc, eq, ilike } from 'drizzle-orm'
-import type { Db } from '../db.js'
-import { toRow, type Movie } from '../movies/movies.js'
-import { collectionEntry } from './schema.js'
-import type { Tmdb } from '../tmdb/tmdb.js'
+import type { Db } from '../db'
+import { toRow, type Movie } from '../movies/movies'
+import { collectionEntry } from './schema'
+import type { Tmdb } from '../tmdb/tmdb'
 
 export const STATUSES = collectionEntry.status.enumValues
 export type Status = (typeof STATUSES)[number]

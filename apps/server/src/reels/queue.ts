@@ -1,8 +1,8 @@
 import { setTimeout } from 'node:timers/promises'
 import { eq, sql } from 'drizzle-orm'
-import type { Db } from '../db.js'
-import { reelScrape, type Reel } from './schema.js'
-import { shortcodeOf } from './scrape-reel.js'
+import type { Db } from '../db'
+import { reelScrape, type Reel } from './schema'
+import { shortcodeOf } from './scrape-reel'
 
 /** Scrapes one reel. The queue's only dependency on a browser. */
 export type Scrape = (url: string) => Promise<Reel>

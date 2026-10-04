@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
-import type { Auth } from '../auth/auth.js'
-import type { Collection } from '../collection/collection.js'
-import type { Tmdb } from '../tmdb/tmdb.js'
-import { importLetterboxd } from './import.js'
+import type { Auth } from '../auth/auth'
+import type { Collection } from '../collection/collection'
+import type { Tmdb } from '../tmdb/tmdb'
+import { importLetterboxd } from './import'
 
 /**
  * POST a multipart form: email, password, and the export's watched.csv, watchlist.csv and likes/films.csv

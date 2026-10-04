@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from 'vitest'
 import { chromium, type Browser } from 'playwright'
-import { scrapeReel } from './scrape-reel.js'
+import { scrapeReel } from './scrape-reel'
 
 // Live: scrapes Instagram with a session file exported by Playwright (e.g. from `context.storageState()`).
 // Set INSTAGRAM_SESSION_FILE to run. Replace the reel if it disappears.
