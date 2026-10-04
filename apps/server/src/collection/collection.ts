@@ -12,7 +12,7 @@ export type Page = { title?: string; oldestFirst?: boolean; offset?: number }
 
 export const PAGE_SIZE = 30
 
-/** A movie arriving with its history, e.g. from an import. Watched if watchedAt is set, else To watch. */
+/** A movie arriving with its history, e.g. from an import. Watched if watchedAt is set, else To watch; only a Watched movie can be a Favourite. */
 export type NewEntry = { movie: Movie; addedAt: Date; watchedAt: Date | null; favourite: boolean }
 
 type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
@@ -102,14 +102,20 @@ export function createCollection(db: Db, tmdb: Tmdb) {
 
     /** Adds movies with the dates they came with. Movies already in the collection are left alone. Resolves to how many were added. */
     async add(entries: NewEntry[]) {
-      if (!entries.length) return 0
-      const rows = entries.map(({ movie, addedAt, watchedAt, favourite }) => {
-        // Favouriting a movie that isn't Watched marks it Watched.
-        const watchedOn = watchedAt ?? (favourite ? addedAt : null)
-        return rowOf(movie, { status: watchedOn ? 'watched' : 'to_watch', addedAt, watchedAt: watchedOn, favourite })
-      })
-      const added = await db.insert(collectionEntry).values(rows).onConflictDoNothing().returning({ tmdbId: collectionEntry.tmdbId })
-      return added.length
+      const rows = entries.map(({ movie, addedAt, watchedAt, favourite }) =>
+        rowOf(movie, watchedAt ? { status: 'watched', addedAt, watchedAt, favourite } : toWatch(addedAt)),
+      )
+      let added = 0
+      // Postgres caps a statement at 65,535 parameters, 8 per row.
+      for (let i = 0; i < rows.length; i += 1000) {
+        const inserted = await db
+          .insert(collectionEntry)
+          .values(rows.slice(i, i + 1000))
+          .onConflictDoNothing()
+          .returning({ tmdbId: collectionEntry.tmdbId })
+        added += inserted.length
+      }
+      return added
     },
 
     /**

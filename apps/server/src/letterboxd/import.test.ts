@@ -59,3 +59,26 @@ test('the import returns 502 when TMDB is down', async () => {
   expect(res.status).toBe(502)
   expect(await res.json()).toEqual({ error: 'TMDB is unreachable' })
 })
+
+test('imports an export larger than one database statement can carry', { timeout: 60_000 }, async () => {
+  const n = 9000
+  const t = await testApp({
+    async search(name) {
+      const id = Number(name.slice('Film '.length))
+      return [{ tmdbId: id, title: name, year: 2000, posterPath: null }]
+    },
+    async details() {
+      return null
+    },
+  })
+  const body = new FormData()
+  body.set('email', EMAIL)
+  body.set('password', PASSWORD)
+  const rows = Array.from({ length: n }, (_, i) => `2026-01-01,Film ${i + 1},2000,u${i + 1}`).join('\n')
+  body.set('watchlist', new File([`${HEADER}\n${rows}\n`], 'watchlist.csv'))
+  body.set('watched', new File([`${HEADER}\n`], 'watched.csv'))
+  body.set('likes', new File([`${HEADER}\n`], 'films.csv'))
+
+  const res = await t.request('/api/import/letterboxd', { method: 'POST', body })
+  expect(await res.json()).toEqual({ movies: n, added: n, notFound: [] })
+})

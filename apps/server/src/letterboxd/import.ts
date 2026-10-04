@@ -24,15 +24,15 @@ function parseLine(line: string) {
 }
 
 type Row = Record<string, string>;
-type Film = { name: string; year: number | null; addedAt: Date; watchedAt: Date | null; favourite: boolean };
+type LetterboxdFilm = { name: string; year: number | null; addedAt: Date; watchedAt: Date | null; favourite: boolean };
 
-/** One film per Letterboxd URI, with the earliest date it was added and the date it was first watched or liked. */
+/** One film per Letterboxd URI, with the earliest date it was added and the first date it was watched or put in likes.csv. Likes are Favourites. */
 export function filmsFrom({ watched, watchlist, likes }: { watched: Row[]; watchlist: Row[]; likes: Row[] }) {
-  const films = new Map<string, Film>();
+  const films = new Map<string, LetterboxdFilm>();
   const film = (r: Row, seen: boolean) => {
     const date = new Date(r.Date);
     const current = films.get(r["Letterboxd URI"]);
-    const next: Film = {
+    const next: LetterboxdFilm = {
       name: r.Name,
       year: r.Year ? Number(r.Year) : null,
       addedAt: current?.addedAt ?? date,
