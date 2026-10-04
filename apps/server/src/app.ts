@@ -6,6 +6,7 @@ import { collectionRoutes } from './collection/routes.js'
 import type { Db } from './db.js'
 import { letterboxdRoutes } from './letterboxd/routes.js'
 import { movieRoutes } from './movies/routes.js'
+import { reelRoutes } from './reels/routes.js'
 import type { Tmdb } from './tmdb/tmdb.js'
 
 export function createApp(db: Db, tmdb: Tmdb) {
@@ -29,7 +30,10 @@ export function createApp(db: Db, tmdb: Tmdb) {
     await next()
   })
 
-  return app.route('/api', movieRoutes(tmdb, collection)).route('/api/collection', collectionRoutes(collection))
+  return app
+    .route('/api', movieRoutes(tmdb, collection))
+    .route('/api/collection', collectionRoutes(collection))
+    .route('/api/reels', reelRoutes(db))
 }
 
 export type AppType = ReturnType<typeof createApp>

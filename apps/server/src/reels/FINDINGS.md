@@ -6,7 +6,7 @@ Results of the prototype from [#14](https://github.com/nikbogman/watchlist/issue
 
 ## How it works
 
-1. The scraper opens `https://www.instagram.com/p/<shortcode>/` in Chromium using a saved, logged-in session (`.instagram-session.json`, created with `pnpm reel:login`).
+1. The scraper opens `https://www.instagram.com/p/<shortcode>/` in Chromium using a saved, logged-in session (at the time a local `.instagram-session.json`; now the `instagram_session` table, written by `pnpm reel:login`).
 2. The first ~14 comments and the caption come embedded in the HTML page, inside `<script type="application/json">` blobs.
 3. To get more, it moves the mouse over the comments panel and scrolls with the wheel. Each scroll makes Instagram request the next page of comments through `/api/graphql` (`PolarisPostCommentsPaginationQuery`), about 15 comments per page.
 4. It reads every response as it arrives. Comments are the nodes under `xdt_api__v1__media__media_id__comments__connection` (replies are skipped). The caption is the `caption.text` of the media whose `code` matches the shortcode.
@@ -36,7 +36,7 @@ These runs scraped one reel, [itsjustcinema](https://www.instagram.com/p/DNBbfSk
 
 ## Concurrency
 
-Every `scrapeReel` call starts and closes its own browser, so calls can run in parallel with no shared state:
+In the prototype, every `scrapeReel` call started and closed its own browser, so calls could run in parallel with no shared state:
 
 ```ts
 await Promise.all(urls.map((url) => scrapeReel(url, { maxComments: 100 })))
@@ -49,7 +49,7 @@ Measured on 3 reels with `maxComments: 100`:
 | One after another | 52.1s |
 | In parallel | 22.6s (about 2.3× faster) |
 
-- **Memory:** each parallel call is a full Chromium process, roughly 200–300 MB of RAM. Sharing one browser across calls would be lighter, but that isn't built.
+- **Memory:** each parallel call was a full Chromium process, roughly 200–300 MB of RAM. The server now shares one browser, with a fresh context per reel, and scrapes one reel at a time.
 - **Account risk:** several parallel sessions on one account look the most like a bot. Keep it to 2–3 at a time.
 
 ## Session and account
@@ -64,10 +64,9 @@ Measured on 3 reels with `maxComments: 100`:
 - **Comment order is Instagram's "For you" order**, not newest-first or most-liked.
 - **If the comments panel isn't found,** the scraper quietly returns only the ~14 comments embedded in the page.
 
-## Open questions before moving it into the server
+## Open questions
 
 - How long does a saved session stay valid?
 - How much real use can one account take before Instagram checkpoints or bans it?
 - Does Instagram block requests from Railway's IP addresses?
-- Where should the session live on the server? It's a local file now, and would need to be a secret or stored in the database.
 - Chromium in the deploy image adds about 150 MB and needs RAM per concurrent scrape.

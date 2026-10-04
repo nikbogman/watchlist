@@ -1,23 +1,16 @@
-import { existsSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
-import { chromium, type Response } from 'playwright'
+import type { BrowserContext, Response } from 'playwright'
+import { shortcodeOf, type Comment, type Reel } from './queue.js'
 
-export type Comment = { author: string; text: string; likes: number; createdAt: Date }
-export type Reel = { url: string; description: string | null; comments: Comment[] }
+export const LOGIN_HINT = 'run `pnpm reel:login` in apps/server'
 
-export const SESSION_FILE = fileURLToPath(new URL('../.instagram-session.json', import.meta.url))
-const LOGIN_HINT = 'run `pnpm reel:login` in packages/reel-scraper'
-const REEL_URL = /^https:\/\/(www\.)?instagram\.com\/([\w.]+\/)?(reels?|p)\/(?<shortcode>[\w-]+)/
-
-export async function scrapeReel(url: string, opts: { maxComments?: number; headless?: boolean } = {}): Promise<Reel> {
-  const shortcode = REEL_URL.exec(url)?.groups?.shortcode
+/** Scrapes in a new page of the given context, which must hold a logged-in Instagram session. */
+export async function scrapeReel(context: BrowserContext, url: string, opts: { maxComments?: number } = {}): Promise<Reel> {
+  const shortcode = shortcodeOf(url)
   if (!shortcode) throw new Error(`${url} is not an Instagram reel or post URL`)
-  if (!existsSync(SESSION_FILE)) throw new Error(`No Instagram session saved, ${LOGIN_HINT}`)
-  const { maxComments = 200, headless = true } = opts
+  const { maxComments = 200 } = opts
 
-  const browser = await chromium.launch({ headless })
+  const page = await context.newPage()
   try {
-    const page = await browser.newPage({ storageState: SESSION_FILE })
     const comments = new Map<string, Comment>()
     let description: string | null | undefined
     let hasNextPage = true
@@ -36,7 +29,7 @@ export async function scrapeReel(url: string, opts: { maxComments?: number; head
           hasNextPage = connection.page_info?.has_next_page ?? hasNextPage
           for (const { node: c } of connection.edges ?? []) {
             if (c.parent_comment_id) continue
-            comments.set(c.pk, { author: c.user.username, text: c.text, likes: c.comment_like_count ?? 0, createdAt: new Date(c.created_at * 1000) })
+            comments.set(c.pk, { author: c.user.username, text: c.text, likes: c.comment_like_count ?? 0, createdAt: new Date(c.created_at * 1000).toISOString() })
           }
         })
       }
@@ -82,14 +75,8 @@ export async function scrapeReel(url: string, opts: { maxComments?: number; head
       comments: [...comments.values()].slice(0, maxComments),
     }
   } finally {
-    await browser.close()
+    await page.close()
   }
-}
-
-if (import.meta.main) {
-  const url = process.argv[2]
-  if (!url) throw new Error('Usage: pnpm reel <instagram reel url>')
-  console.log(JSON.stringify(await scrapeReel(url), null, 2))
 }
 
 type CommentConnection = { edges?: { node: RawComment }[]; page_info?: { has_next_page?: boolean } }
