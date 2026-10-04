@@ -24,7 +24,7 @@ export function createApp(db: Db, tmdb: Tmdb) {
   })
 
   // Checks the email and password itself, so it sits before the session check.
-  app.route('/api/import/letterboxd', letterboxdRoutes(auth, db, tmdb))
+  app.route('/api/import/letterboxd', letterboxdRoutes(auth, collection, tmdb))
 
   app.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })

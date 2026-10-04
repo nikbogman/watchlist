@@ -1,5 +1,4 @@
-import type { Db } from "../db.js";
-import { collectionEntry } from "../schema/index.js";
+import type { Collection, NewEntry } from "../collection/collection.js";
 import type { Tmdb } from "../tmdb/tmdb.js";
 
 /** Rows of a Letterboxd export CSV, keyed by header. Handles quoted fields ("Crouching Tiger, Hidden Dragon"). */
@@ -25,93 +24,49 @@ function parseLine(line: string) {
 }
 
 type Row = Record<string, string>;
-type Movie = {
-  name: string;
-  year: number | null;
-  status: "to_watch" | "watched";
-  favourite: boolean;
-  addedAt: Date;
-  watchedAt: Date | null;
-};
+type Film = { name: string; year: number | null; addedAt: Date; watchedAt: Date | null; favourite: boolean };
 
-/** One Entry per movie, keyed by Letterboxd URI. Watched wins over the watchlist; a liked movie counts as Watched. */
-export function moviesFrom({
-  watched,
-  watchlist,
-  likes,
-}: {
-  watched: Row[];
-  watchlist: Row[];
-  likes: Row[];
-}) {
-  const movies = new Map<string, Movie>();
-  const movie = (r: Row) => ({
-    name: r.Name,
-    year: r.Year ? Number(r.Year) : null,
-    date: new Date(r.Date),
-  });
-
-  for (const r of watchlist) {
-    const { name, year, date } = movie(r);
-    movies.set(r["Letterboxd URI"], {
-      name,
-      year,
-      status: "to_watch",
-      favourite: false,
-      addedAt: date,
-      watchedAt: null,
-    });
-  }
-  for (const r of [...watched, ...likes]) {
-    const { name, year, date } = movie(r);
-    const current = movies.get(r["Letterboxd URI"]);
-    const watchedAt = current?.watchedAt ?? date;
-    movies.set(r["Letterboxd URI"], {
-      name,
-      year,
-      status: "watched",
-      favourite: current?.favourite ?? false,
+/** One film per Letterboxd URI, with the earliest date it was added and the date it was first watched or liked. */
+export function filmsFrom({ watched, watchlist, likes }: { watched: Row[]; watchlist: Row[]; likes: Row[] }) {
+  const films = new Map<string, Film>();
+  const film = (r: Row, seen: boolean) => {
+    const date = new Date(r.Date);
+    const current = films.get(r["Letterboxd URI"]);
+    const next: Film = {
+      name: r.Name,
+      year: r.Year ? Number(r.Year) : null,
       addedAt: current?.addedAt ?? date,
-      watchedAt,
-    });
-  }
-  for (const r of likes) movies.get(r["Letterboxd URI"])!.favourite = true;
+      watchedAt: current?.watchedAt ?? (seen ? date : null),
+      favourite: current?.favourite ?? false,
+    };
+    films.set(r["Letterboxd URI"], next);
+    return next;
+  };
 
-  return [...movies.values()];
+  for (const r of watchlist) film(r, false);
+  for (const r of watched) film(r, true);
+  for (const r of likes) film(r, true).favourite = true;
+  return [...films.values()];
 }
 
 /** The three CSVs of a Letterboxd export: watched.csv, watchlist.csv and likes/films.csv. */
 export type Export = { watched: string; watchlist: string; likes: string };
 
-/** Adds the export's movies to the Collection. Movies already in it are left alone, so it is safe to rerun. */
-export async function importLetterboxd(db: Db, tmdb: Tmdb, csv: Export) {
-  const movies = moviesFrom({
+/** Adds the export's films to the Collection, matched to TMDB movies. Movies already in it are left alone, so it is safe to rerun. */
+export async function importLetterboxd(collection: Collection, tmdb: Tmdb, csv: Export) {
+  const films = filmsFrom({
     watched: parseCsv(csv.watched),
     watchlist: parseCsv(csv.watchlist),
     likes: parseCsv(csv.likes),
   });
 
   const notFound: string[] = [];
-  let added = 0;
-  for (const { name, year, ...entry } of movies) {
+  const entries: NewEntry[] = [];
+  for (const { name, year, ...history } of films) {
     // ponytail: exact title + year match on TMDB's first page, else skipped and reported
     const movie = (await tmdb.search(name)).find((m) => m.year === year);
-    if (!movie) {
-      notFound.push(`${name} (${year})`);
-      continue;
-    }
-    const inserted = await db
-      .insert(collectionEntry)
-      .values({
-        tmdbId: movie.tmdbId,
-        title: movie.title,
-        year: movie.year,
-        posterPath: movie.posterPath,
-        ...entry,
-      })
-      .onConflictDoNothing()
-      .returning();
-    added += inserted.length;
+    if (movie) entries.push({ movie, ...history });
+    else notFound.push(`${name} (${year})`);
   }
-  return { movies: movies.length, added, notFound };
+  return { movies: films.length, added: await collection.add(entries), notFound };
 }

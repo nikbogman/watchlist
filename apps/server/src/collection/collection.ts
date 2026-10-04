@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, ilike } from 'drizzle-orm'
 import type { Db } from '../db.js'
-import { toRow } from '../movies/movies.js'
+import { toRow, type Movie } from '../movies/movies.js'
 import { collectionEntry } from '../schema/index.js'
 import type { Tmdb } from '../tmdb/tmdb.js'
 
@@ -11,6 +11,9 @@ export type Filter = { status: Status } | { favourite: true }
 export type Page = { title?: string; oldestFirst?: boolean; offset?: number }
 
 export const PAGE_SIZE = 30
+
+/** A movie arriving with its history, e.g. from an import. Watched if watchedAt is set, else To watch. */
+export type NewEntry = { movie: Movie; addedAt: Date; watchedAt: Date | null; favourite: boolean }
 
 type Entry = Pick<typeof collectionEntry.$inferSelect, 'status' | 'addedAt' | 'watchedAt' | 'favourite'>
 
@@ -39,11 +42,14 @@ export function createCollection(db: Db, tmdb: Tmdb) {
     return entryOf(entry)
   }
 
-  /** Copies the movie from TMDB once, never refreshed. Resolves to null if TMDB doesn't know the id. */
+  // The movie is copied in once, never refreshed.
+  const rowOf = ({ tmdbId, title, year, posterPath }: Movie, entry: Entry) => ({ tmdbId, title, year, posterPath, ...entry })
+
+  /** Resolves to null if TMDB doesn't know the id. */
   async function create(tmdbId: number, entry: Entry) {
     const movie = await tmdb.details(tmdbId)
     if (!movie) return null
-    await db.insert(collectionEntry).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...entry })
+    await db.insert(collectionEntry).values(rowOf(movie, entry))
     return entryOf(entry)
   }
 
@@ -92,6 +98,18 @@ export function createCollection(db: Db, tmdb: Tmdb) {
         return update(tmdbId, next)
       }
       return create(tmdbId, next)
+    },
+
+    /** Adds movies with the dates they came with. Movies already in the collection are left alone. Resolves to how many were added. */
+    async add(entries: NewEntry[]) {
+      if (!entries.length) return 0
+      const rows = entries.map(({ movie, addedAt, watchedAt, favourite }) => {
+        // Favouriting a movie that isn't Watched marks it Watched.
+        const watchedOn = watchedAt ?? (favourite ? addedAt : null)
+        return rowOf(movie, { status: watchedOn ? 'watched' : 'to_watch', addedAt, watchedAt: watchedOn, favourite })
+      })
+      const added = await db.insert(collectionEntry).values(rows).onConflictDoNothing().returning({ tmdbId: collectionEntry.tmdbId })
+      return added.length
     },
 
     /**

@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Auth } from "../auth/auth.js";
-import type { Db } from "../db.js";
+import type { Collection } from "../collection/collection.js";
 import type { Tmdb } from "../tmdb/tmdb.js";
 import { importLetterboxd } from "./import.js";
 
@@ -8,7 +8,7 @@ import { importLetterboxd } from "./import.js";
  * POST a multipart form: email, password, and the export's watched.csv, watchlist.csv and likes/films.csv
  * as watched, watchlist and likes.
  */
-export function letterboxdRoutes(auth: Auth, db: Db, tmdb: Tmdb) {
+export function letterboxdRoutes(auth: Auth, collection: Collection, tmdb: Tmdb) {
   return new Hono().post("/", async (c) => {
     const { email, password, watched, watchlist, likes } =
       await c.req.parseBody();
@@ -47,6 +47,6 @@ export function letterboxdRoutes(auth: Auth, db: Db, tmdb: Tmdb) {
       watchlist: await watchlist.text(),
       likes: await likes.text(),
     };
-    return c.json(await importLetterboxd(db, tmdb, csv));
+    return c.json(await importLetterboxd(collection, tmdb, csv));
   });
 }
