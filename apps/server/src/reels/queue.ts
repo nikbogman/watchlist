@@ -1,7 +1,7 @@
 import { setTimeout } from 'node:timers/promises'
-import { eq, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import type { Db } from '../db'
-import { reelScrape, type Reel } from './schema'
+import { reelScrape, type Reel, type Title } from './schema'
 import { shortcodeOf } from './scrape-reel'
 
 /** Scrapes one reel. The queue's only dependency on a browser. */
@@ -32,13 +32,51 @@ export function createReelQueue(db: Db) {
     return true
   }
 
+  /** Queues a failed scrape again. False when there is no failed scrape with that id. */
+  async function retry(id: string) {
+    if (!UUID.test(id)) return false
+    const jobs = await db
+      .update(reelScrape)
+      .set({ status: 'queued', error: null, updatedAt: new Date() })
+      .where(and(eq(reelScrape.id, id), eq(reelScrape.status, 'failed')))
+      .returning({ id: reelScrape.id })
+    return jobs.length > 0
+  }
+
   return {
     /** Queues a scrape. Resolves to its id, or null when the URL isn't an Instagram reel or post. */
     async enqueue(url: string) {
-      if (!shortcodeOf(url)) return null
-      const [job] = await db.insert(reelScrape).values({ url }).returning({ id: reelScrape.id })
+      const shortcode = shortcodeOf(url)
+      if (!shortcode) return null
+      // One scrape per reel: sharing it again moves it to the top of the list, and re-queues it if it failed.
+      // ponytail: check-then-insert can race into a duplicate; a unique index on url fixes that if it matters.
+      const canonical = `https://www.instagram.com/p/${shortcode}/`
+      const [existing] = await db.select({ id: reelScrape.id }).from(reelScrape).where(eq(reelScrape.url, canonical))
+      if (existing) {
+        await retry(existing.id)
+        await db.update(reelScrape).set({ createdAt: new Date() }).where(eq(reelScrape.id, existing.id))
+        return existing.id
+      }
+      const [job] = await db.insert(reelScrape).values({ url: canonical }).returning({ id: reelScrape.id })
       return job!.id
     },
+
+    /** Every scrape, newest shared first, with its title instead of the whole reel. */
+    list() {
+      return db
+        .select({
+          id: reelScrape.id,
+          url: reelScrape.url,
+          status: reelScrape.status,
+          title: sql<Title | null>`${reelScrape.reel}->'title'`,
+          error: reelScrape.error,
+          createdAt: reelScrape.createdAt,
+        })
+        .from(reelScrape)
+        .orderBy(desc(reelScrape.createdAt))
+    },
+
+    retry,
 
     /** The scrape's status and, once done or failed, its reel or error. Null for an unknown id. */
     async job(id: string) {

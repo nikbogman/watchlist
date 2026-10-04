@@ -41,7 +41,8 @@ describe('reel scrape queue', () => {
     const scraped: string[] = []
     expect(await runNext(async (url) => (scraped.push(url), REEL))).toBe(true)
 
-    expect(scraped).toEqual([URL])
+    // Stored as the /p/ link, the one the scraper opens.
+    expect(scraped).toEqual(['https://www.instagram.com/p/DNBbfSkMPuy/'])
     expect(await poll(id)).toEqual({ status: 'done', reel: REEL, error: null })
   })
 
@@ -70,6 +71,57 @@ describe('reel scrape queue', () => {
 
     expect(scraped).toEqual(['https://www.instagram.com/p/first/', 'https://www.instagram.com/p/second/'])
     expect((await poll(first)).status).toBe('done')
+  })
+
+  test('lists every request newest first, with its title once identified', async () => {
+    const { runNext, enqueue, request, cookie } = await setup()
+    const first = await enqueue('https://www.instagram.com/p/first/')
+    await runNext(async (url) => ({ ...REEL, url, title: { name: 'Heat', year: 1995, kind: 'movie', tmdbId: 949 } }))
+    const second = await enqueue('https://www.instagram.com/p/second/')
+
+    const list = await (await request('/api/reels', { cookie })).json()
+
+    expect(list).toMatchObject([
+      { id: second, url: 'https://www.instagram.com/p/second/', status: 'queued', title: null, error: null },
+      { id: first, status: 'done', title: { name: 'Heat', year: 1995, kind: 'movie', tmdbId: 949 } },
+    ])
+    expect(list[0].createdAt).toEqual(expect.any(String))
+    expect(list[1]).not.toHaveProperty('reel')
+  })
+
+  test('sharing the same reel again returns its request, moved to the top', async () => {
+    const { enqueue, request, cookie } = await setup()
+    const id = await enqueue('https://www.instagram.com/reel/DNBbfSkMPuy/?igsh=abc')
+    await enqueue('https://www.instagram.com/p/other/')
+    expect(await enqueue('https://www.instagram.com/p/DNBbfSkMPuy/')).toBe(id)
+
+    const list = await (await request('/api/reels', { cookie })).json()
+    expect(list.map((r: { id: string }) => r.id)[0]).toBe(id)
+    expect(list).toHaveLength(2)
+  })
+
+  test('sharing a failed reel again re-queues it', async () => {
+    const { runNext, enqueue, poll } = await setup()
+    const id = await enqueue()
+    await runNext(async () => {
+      throw new Error('boom')
+    })
+
+    expect(await enqueue()).toBe(id)
+    expect(await poll(id)).toEqual({ status: 'queued', reel: null, error: null })
+  })
+
+  test('retries a failed request, and only a failed one', async () => {
+    const { runNext, enqueue, poll, post, cookie } = await setup()
+    const id = await enqueue()
+    expect((await post(`/api/reels/${id}/retry`, {}, cookie)).status).toBe(404)
+
+    await runNext(async () => {
+      throw new Error('boom')
+    })
+    expect((await post(`/api/reels/${id}/retry`, {}, cookie)).status).toBe(202)
+    expect(await poll(id)).toEqual({ status: 'queued', reel: null, error: null })
+    expect((await post('/api/reels/not-a-uuid/retry', {}, cookie)).status).toBe(404)
   })
 
   test('404s an unknown scrape', async () => {
