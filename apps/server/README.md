@@ -54,4 +54,4 @@ Finds which movie or TV show an Instagram reel is about. Prototype from [#14](ht
 - Comments come in Instagram's "For you" order.
 - If the comments panel isn't found, only the ~14 embedded comments are read.
 - Unknown: how long a session lasts, how much use one account takes before a checkpoint or ban, and whether Instagram blocks Railway's IPs.
-- The deploy image needs `pnpm exec playwright install --with-deps chromium` (about 150 MB).
+- Deploys build from the root `Dockerfile`, which installs Chromium with `playwright install --with-deps chromium` (about 150 MB).
