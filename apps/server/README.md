@@ -20,7 +20,7 @@ Finds which movie or TV show an Instagram reel is about. Prototype from [#14](ht
 
 1. Opens `instagram.com/p/<shortcode>/` in a shared headless Chromium, in a fresh context holding the saved session (`instagram_session` table, written by `pnpm reel:login`).
 2. Reads the caption and comments from the JSON Instagram embeds in the page (~14 comments) and from the GraphQL responses it fetches as the comments panel is scrolled (~15 per page). Replies are skipped.
-3. Every 20 new comments, asks Gemini (`gemini-3.1-flash-lite`, free AI Studio key) for the title, given the caption and that batch. Stops scrolling at the first batch that names one, at 200 comments, at the last page, or after 10s with no new comments.
+3. Asks Gemini (`gemini-3.1-flash-lite`, free AI Studio key) for the title from the caption alone, then from the caption plus each new batch of 20 comments. Stops scrolling at the first answer that names one, at 200 comments, at the last page, or after 10s with no new comments.
 4. Matches a movie to TMDB by name and year (`reel.title.tmdbId`). TV shows stay unmatched.
 
 **Gotchas**

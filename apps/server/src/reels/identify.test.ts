@@ -60,26 +60,36 @@ const comments = (n: number) => Array.from({ length: n }, (_, i) => ({ ...REEL.c
 
 describe('identifyInBatches', () => {
   const HEAT = { name: 'Heat', year: 1995, kind: 'movie' as const, tmdbId: 949 }
-  /** Finds the title once it sees comment `answerAt`; records each batch it was asked about. */
-  const fake = (answerAt?: number) => {
+  /** Names the title when `names` accepts the batch's comment texts; records each batch it was asked about. */
+  const fake = (names: (texts: string[]) => boolean = () => false) => {
     const asked: string[][] = []
     const identify: Identify = async (reel) => {
-      asked.push(reel.comments.map((c) => c.text))
-      return reel.comments.some((c) => c.text === `c${answerAt}`) ? HEAT : null
+      const texts = reel.comments.map((c) => c.text)
+      asked.push(texts)
+      return names(texts) ? HEAT : null
     }
     return { identify, asked }
   }
 
-  test('asks about each full batch of new comments and stops at the one that names the title', async () => {
-    const { identify, asked } = fake(25)
+  test('asks about the caption alone first, and stops there when it names the title', async () => {
+    const { identify, asked } = fake(() => true)
+    const batches = identifyInBatches(identify, 20)
+
+    expect(await batches.until({ ...REEL, comments: comments(15) }, false)).toBe(true)
+    expect(asked).toEqual([[]])
+    expect(batches.title()).toEqual(HEAT)
+  })
+
+  test('then asks about each full batch of new comments and stops at the one that names the title', async () => {
+    const { identify, asked } = fake((texts) => texts.includes('c25'))
     const batches = identifyInBatches(identify, 20)
 
     expect(await batches.until({ ...REEL, comments: comments(15) }, false)).toBe(false)
-    expect(asked).toEqual([])
     expect(await batches.until({ ...REEL, comments: comments(30) }, false)).toBe(false)
     expect(await batches.until({ ...REEL, comments: comments(45) }, false)).toBe(true)
 
     expect(asked.map((b) => [b[0], b.length])).toEqual([
+      [undefined, 0],
       ['c0', 20],
       ['c20', 20],
     ])
@@ -92,14 +102,14 @@ describe('identifyInBatches', () => {
     await batches.until({ ...REEL, comments: comments(25) }, false)
     await batches.until({ ...REEL, comments: comments(25) }, true)
 
-    expect(asked.map((b) => b.length)).toEqual([20, 5])
+    expect(asked.map((b) => b.length)).toEqual([0, 20, 5])
     expect(batches.title()).toBeNull()
   })
 
-  test('asks once, on the caption alone, about a reel with no comments', async () => {
+  test('skips the caption-only question when there is no caption', async () => {
     const { identify, asked } = fake()
-    await identifyInBatches(identify).until({ ...REEL, comments: [] }, true)
-    expect(asked).toEqual([[]])
+    await identifyInBatches(identify, 20).until({ ...REEL, description: null, comments: comments(20) }, false)
+    expect(asked.map((b) => b.length)).toEqual([20])
   })
 
   test('does not ask again when the comments end on a full batch', async () => {
@@ -107,6 +117,6 @@ describe('identifyInBatches', () => {
     const batches = identifyInBatches(identify, 20)
     await batches.until({ ...REEL, comments: comments(20) }, false)
     await batches.until({ ...REEL, comments: comments(20) }, true)
-    expect(asked).toHaveLength(1)
+    expect(asked.map((b) => b.length)).toEqual([0, 20])
   })
 })

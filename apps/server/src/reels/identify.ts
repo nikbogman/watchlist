@@ -30,20 +30,24 @@ const prompt = (reel: Reel) =>
 export type Identify = (reel: Reel) => Promise<Title | null>
 
 /**
- * Identifies a reel while it is scraped: each new batch of comments (with the caption) is asked about in turn,
- * and `until`, given to scrapeReel, stops the scrape at the first batch that names the title.
- * A reel with no comments is asked about once, on its caption alone.
+ * Identifies a reel while it is scraped: first the caption alone, then each new batch of comments (with the caption)
+ * in turn. `until`, given to scrapeReel, stops the scrape at the first one that names the title.
  */
 export function identifyInBatches(identify: Identify, size = 20) {
+  let askedCaption = false
   let checked = 0
   let title: Title | null = null
   return {
     title: () => title,
     until: async (reel: Reel, final: boolean) => {
+      // Captions often name the film outright, so this usually ends the scrape before any scrolling.
+      if (!askedCaption) {
+        askedCaption = true
+        if (reel.description) title = await identify({ ...reel, comments: [] })
+      }
       while (title === null) {
         const batch = reel.comments.slice(checked, checked + size)
-        if (batch.length < size && !final) return false
-        if (!batch.length && checked > 0) return false
+        if (!batch.length || (batch.length < size && !final)) return false
         checked += batch.length
         title = await identify({ ...reel, comments: batch })
         if (batch.length < size) break
