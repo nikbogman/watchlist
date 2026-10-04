@@ -8,7 +8,8 @@ let browser: Promise<Browser> | undefined
 /** One Chromium for the whole process, launched on first use and relaunched if it dies. */
 async function sharedBrowser() {
   if (browser && (await browser.catch(() => null))?.isConnected()) return browser
-  return (browser = chromium.launch())
+  // Containers give /dev/shm only 64 MB, which crashes Chromium's pages; /tmp has room.
+  return (browser = chromium.launch({ args: ['--disable-dev-shm-usage'] }))
 }
 
 /** Scrapes in the shared browser, in a fresh context per reel holding the saved Instagram session. */
