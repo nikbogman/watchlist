@@ -20,8 +20,8 @@ export async function seed(auth: Auth, email: string, password: string) {
 }
 
 if (import.meta.main) {
-  const { SEED_EMAIL, SEED_PASSWORD, DATABASE_URL } = process.env
-  if (!SEED_EMAIL || !SEED_PASSWORD || !DATABASE_URL) throw new Error('Set SEED_EMAIL, SEED_PASSWORD and DATABASE_URL')
+  const { env } = await import('../env')
+  const { SEED_EMAIL, SEED_PASSWORD, DATABASE_URL } = env('SEED_EMAIL', 'SEED_PASSWORD', 'DATABASE_URL', 'BETTER_AUTH_SECRET')
   const { createAuth } = await import('./auth')
   const { createDb } = await import('../db')
   const db = await createDb(DATABASE_URL)

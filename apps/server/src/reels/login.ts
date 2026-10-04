@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { createDb } from '../db'
+import { env } from '../env'
 import { instagramSession } from './schema'
 
 // Saves the Instagram session the scraper uses. Pass a storage-state JSON file to import it instead of logging in.
-if (!process.env.DATABASE_URL) throw new Error('Set DATABASE_URL')
-const db = await createDb(process.env.DATABASE_URL)
+const db = await createDb(env('DATABASE_URL').DATABASE_URL)
 
 let storageState: unknown
 if (process.argv[2]) {
