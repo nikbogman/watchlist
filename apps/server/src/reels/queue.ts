@@ -53,12 +53,11 @@ export async function startWorker(db: Db, scrape: Scrape) {
   // ponytail: assumes one server process, so anything still running was cut off by a restart.
   // Running several would need a lease (locked_at) instead.
   await db.update(reelScrape).set({ status: 'queued' }).where(eq(reelScrape.status, 'running'))
-  for (;;) {
-    try {
-      if (!(await runNext(db, scrape))) await setTimeout(2000)
-    } catch (e) {
+  while (true) {
+    const ran = await runNext(db, scrape).catch((e: unknown) => {
       console.error('Reel worker:', e)
-      await setTimeout(2000)
-    }
+      return false
+    })
+    if (!ran) await setTimeout(2000)
   }
 }
