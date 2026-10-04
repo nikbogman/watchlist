@@ -1,6 +1,6 @@
-import { expect, test } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import type { Tmdb } from '../tmdb/tmdb'
-import { createIdentifier } from './identify'
+import { createIdentifier, identifyInBatches, type Identify } from './identify'
 import type { Reel } from './schema'
 
 const REEL: Reel = {
@@ -54,4 +54,59 @@ test('a TV show has no TMDB match', async () => {
 test('null when the reel does not say what it shows', async () => {
   const { fetchFn } = gemini({ found: false, name: '', year: null, kind: 'movie' })
   expect(await createIdentifier('KEY', tmdb, fetchFn)(REEL)).toBeNull()
+})
+
+const comments = (n: number) => Array.from({ length: n }, (_, i) => ({ ...REEL.comments[0]!, text: `c${i}` }))
+
+describe('identifyInBatches', () => {
+  const HEAT = { name: 'Heat', year: 1995, kind: 'movie' as const, tmdbId: 949 }
+  /** Finds the title once it sees comment `answerAt`; records each batch it was asked about. */
+  const fake = (answerAt?: number) => {
+    const asked: string[][] = []
+    const identify: Identify = async (reel) => {
+      asked.push(reel.comments.map((c) => c.text))
+      return reel.comments.some((c) => c.text === `c${answerAt}`) ? HEAT : null
+    }
+    return { identify, asked }
+  }
+
+  test('asks about each full batch of new comments and stops at the one that names the title', async () => {
+    const { identify, asked } = fake(25)
+    const batches = identifyInBatches(identify, 20)
+
+    expect(await batches.until({ ...REEL, comments: comments(15) }, false)).toBe(false)
+    expect(asked).toEqual([])
+    expect(await batches.until({ ...REEL, comments: comments(30) }, false)).toBe(false)
+    expect(await batches.until({ ...REEL, comments: comments(45) }, false)).toBe(true)
+
+    expect(asked.map((b) => [b[0], b.length])).toEqual([
+      ['c0', 20],
+      ['c20', 20],
+    ])
+    expect(batches.title()).toEqual(HEAT)
+  })
+
+  test('asks about the leftover comments when the scrape ends', async () => {
+    const { identify, asked } = fake()
+    const batches = identifyInBatches(identify, 20)
+    await batches.until({ ...REEL, comments: comments(25) }, false)
+    await batches.until({ ...REEL, comments: comments(25) }, true)
+
+    expect(asked.map((b) => b.length)).toEqual([20, 5])
+    expect(batches.title()).toBeNull()
+  })
+
+  test('asks once, on the caption alone, about a reel with no comments', async () => {
+    const { identify, asked } = fake()
+    await identifyInBatches(identify).until({ ...REEL, comments: [] }, true)
+    expect(asked).toEqual([[]])
+  })
+
+  test('does not ask again when the comments end on a full batch', async () => {
+    const { identify, asked } = fake()
+    const batches = identifyInBatches(identify, 20)
+    await batches.until({ ...REEL, comments: comments(20) }, false)
+    await batches.until({ ...REEL, comments: comments(20) }, true)
+    expect(asked).toHaveLength(1)
+  })
 })

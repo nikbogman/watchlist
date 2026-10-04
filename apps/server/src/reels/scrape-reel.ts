@@ -10,11 +10,17 @@ export function shortcodeOf(url: string) {
   return REEL_URL.exec(url)?.groups?.shortcode
 }
 
+export type ScrapeOptions = {
+  maxComments?: number
+  /** Called with the reel so far after every page of comments, and once more with final = true. Resolving true stops scraping. */
+  until?: (reel: Reel, final: boolean) => Promise<boolean>
+}
+
 /** Scrapes in a new page of the given context, which must hold a logged-in Instagram session. */
-export async function scrapeReel(context: BrowserContext, url: string, opts: { maxComments?: number } = {}): Promise<Reel> {
+export async function scrapeReel(context: BrowserContext, url: string, opts: ScrapeOptions = {}): Promise<Reel> {
   const shortcode = shortcodeOf(url)
   if (!shortcode) throw new Error(`${url} is not an Instagram reel or post URL`)
-  const { maxComments = 200 } = opts
+  const { maxComments = 200, until = async () => false } = opts
 
   const page = await context.newPage()
   try {
@@ -52,11 +58,24 @@ export async function scrapeReel(context: BrowserContext, url: string, opts: { m
     const settle = async () => {
       while (pending.length) await Promise.all(pending.splice(0))
     }
+    const reelSoFar = async (): Promise<Reel> => ({
+      url,
+      // undefined = caption not seen in any payload; null = the reel has no caption
+      description:
+        description === undefined
+          ? await page
+              .locator('meta[property="og:description"]')
+              .getAttribute('content')
+              .catch(() => null)
+          : description,
+      comments: [...comments.values()].slice(0, maxComments),
+    })
 
     // A bare /reel/ link opens the full-screen viewer, which hides comments; /p/ opens the post view with them.
     await page.goto(`https://www.instagram.com/p/${shortcode}/`, { waitUntil: 'networkidle' })
     if (page.url().includes('/accounts/login')) throw new Error(`Instagram session expired, ${LOGIN_HINT}`)
     await settle()
+    let stopped = await until(await reelSoFar(), false)
 
     // Wheel over the comments panel (the one scrollable box inside the page) until the cap or the last page.
     // Setting scrollTop doesn't trigger Instagram's pagination; real wheel events do.
@@ -69,26 +88,18 @@ export async function scrapeReel(context: BrowserContext, url: string, opts: { m
     })
     if (panelCenter) await page.mouse.move(panelCenter.x, panelCenter.y)
     // Stops after 10s with no new comments in case Instagram stalls without saying it's on the last page.
-    for (let idle = 0; panelCenter && hasNextPage && comments.size < maxComments && idle < 20;) {
+    for (let idle = 0; !stopped && panelCenter && hasNextPage && comments.size < maxComments && idle < 20;) {
       const before = comments.size
       await page.mouse.wheel(0, 2000)
       await page.waitForTimeout(500)
       await settle()
       idle = comments.size > before ? 0 : idle + 1
+      if (comments.size > before) stopped = await until(await reelSoFar(), false)
     }
 
-    return {
-      url,
-      // undefined = caption not seen in any payload; null = the reel has no caption
-      description:
-        description === undefined
-          ? await page
-              .locator('meta[property="og:description"]')
-              .getAttribute('content')
-              .catch(() => null)
-          : description,
-      comments: [...comments.values()].slice(0, maxComments),
-    }
+    const reel = await reelSoFar()
+    if (!stopped) await until(reel, true)
+    return reel
   } finally {
     await page.close()
   }

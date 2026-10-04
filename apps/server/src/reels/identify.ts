@@ -27,8 +27,34 @@ const prompt = (reel: Reel) =>
     ...reel.comments.toSorted((a, b) => b.likes - a.likes).map((c) => `- ${c.text}`),
   ].join('\n')
 
+export type Identify = (reel: Reel) => Promise<Title | null>
+
+/**
+ * Identifies a reel while it is scraped: each new batch of comments (with the caption) is asked about in turn,
+ * and `until`, given to scrapeReel, stops the scrape at the first batch that names the title.
+ * A reel with no comments is asked about once, on its caption alone.
+ */
+export function identifyInBatches(identify: Identify, size = 20) {
+  let checked = 0
+  let title: Title | null = null
+  return {
+    title: () => title,
+    until: async (reel: Reel, final: boolean) => {
+      while (title === null) {
+        const batch = reel.comments.slice(checked, checked + size)
+        if (batch.length < size && !final) return false
+        if (!batch.length && checked > 0) return false
+        checked += batch.length
+        title = await identify({ ...reel, comments: batch })
+        if (batch.length < size) break
+      }
+      return title !== null
+    },
+  }
+}
+
 /** Asks Gemini what the reel shows, then matches a movie to TMDB. Null when the reel doesn't say. */
-export function createIdentifier(apiKey: string, tmdb: Tmdb, fetchFn: typeof fetch = fetch) {
+export function createIdentifier(apiKey: string, tmdb: Tmdb, fetchFn: typeof fetch = fetch): Identify {
   return async (reel: Reel): Promise<Title | null> => {
     const res = await fetchFn(API, {
       method: 'POST',

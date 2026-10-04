@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app'
 import { createDb } from './db'
 import { env } from './env'
-import { createIdentifier } from './reels/identify'
+import { createIdentifier, identifyInBatches } from './reels/identify'
 import { createReelQueue } from './reels/queue'
 import { scrapeWithSharedBrowser } from './reels/shared-browser'
 import { createTmdbClient } from './tmdb/tmdb'
@@ -18,8 +18,9 @@ const tmdb = createTmdbClient(TMDB_API_KEY)
 const scrape = scrapeWithSharedBrowser(db)
 const identify = createIdentifier(GEMINI_API_KEY, tmdb)
 void createReelQueue(db).work(async (url) => {
-  const reel = await scrape(url)
-  return { ...reel, title: await identify(reel) }
+  const batches = identifyInBatches(identify)
+  const reel = await scrape(url, { until: batches.until })
+  return { ...reel, title: batches.title() }
 })
 const app = createApp(db, tmdb)
 
