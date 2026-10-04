@@ -1,45 +1,20 @@
-import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text } from 'react-native'
 
-import type { Filter } from 'server/src/collection/collection'
-
-import { api, parseResponse } from '@/api'
+import { useCollectionList, type Filter } from '@/collection'
 import { EmptyList } from '@/components/empty-list'
 import { MovieRow } from '@/components/movie-row'
 import { ScreenHeader } from '@/components/screen-header'
 import { SearchField } from '@/components/search-field'
 import { colors, fonts } from '@/theme'
+import { useDebounced } from '@/use-debounced'
 
 /** A tab listing the collection filtered by Status or Favourite. */
 export function CollectionList({ title, filter, empty }: { title: string; filter: Filter; empty: string }) {
   const [text, setText] = useState('')
   const [oldestFirst, setOldestFirst] = useState(false)
-  const [titleSearch, setTitleSearch] = useState('')
-  // Wait for a pause in typing before asking the server.
-  useEffect(() => {
-    const timer = setTimeout(() => setTitleSearch(text.trim()), 250)
-    return () => clearTimeout(timer)
-  }, [text])
-
-  const list = useInfiniteQuery({
-    queryKey: ['collection', filter, titleSearch, oldestFirst],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        api.api.collection.$get({
-          query: {
-            ...('status' in filter ? { status: filter.status } : { favourite: 'true' }),
-            title: titleSearch,
-            order: oldestFirst ? 'oldest' : 'newest',
-            offset: String(pageParam),
-          },
-        }),
-      ),
-    initialPageParam: 0,
-    getNextPageParam: (last) => last.nextOffset ?? undefined,
-    // Keeps the list on screen while a new search or sort loads.
-    placeholderData: keepPreviousData,
-  })
+  const titleSearch = useDebounced(text.trim())
+  const list = useCollectionList(filter, { title: titleSearch, oldestFirst })
 
   const first = list.data?.pages[0]
   const movies = list.data?.pages.flatMap((p) => p.movies) ?? []

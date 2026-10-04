@@ -1,30 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 
-import { api, parseResponse } from '@/api'
+import { useSearch } from '@/collection'
 import { MovieRow } from '@/components/movie-row'
 import { SearchField } from '@/components/search-field'
 import { ScreenHeader } from '@/components/screen-header'
 import { colors, fonts } from '@/theme'
-
-function useDebounced<T>(value: T, ms: number) {
-  const [debounced, setDebounced] = useState(value)
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), ms)
-    return () => clearTimeout(id)
-  }, [value, ms])
-  return debounced
-}
+import { useDebounced } from '@/use-debounced'
 
 export default function Search() {
   const [text, setText] = useState('')
-  const q = useDebounced(text.trim(), 300)
-  const search = useQuery({
-    queryKey: ['search', q],
-    queryFn: () => parseResponse(api.api.search.$get({ query: { q } })),
-    enabled: q.length > 0,
-  })
+  const q = useDebounced(text.trim())
+  const search = useSearch(q)
 
   return (
     <View style={styles.screen}>

@@ -1,8 +1,8 @@
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import type { MovieSummary } from 'server/src/movies/movies'
 
+import type { MovieSummary } from '@/collection'
 import { colors, fonts } from '@/theme'
 
 // Muted tones for the placeholder block shown when TMDB has no poster.

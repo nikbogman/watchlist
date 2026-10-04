@@ -1,37 +1,23 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { router, useLocalSearchParams } from 'expo-router'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
-import type { Status } from 'server/src/collection/collection'
 
-import { api, parseResponse } from '@/api'
+import { useMovie, useSetEntry, type Status } from '@/collection'
 import { Poster } from '@/components/movie-row'
 import { colors, fonts } from '@/theme'
 
 export default function Movie() {
   const { tmdbId } = useLocalSearchParams<{ tmdbId: string }>()
   const { top } = useSafeAreaInsets()
-  const movie = useQuery({
-    queryKey: ['movie', tmdbId],
-    queryFn: () => parseResponse(api.api.movies[':tmdbId'].$get({ param: { tmdbId } })),
-  })
-  const queryClient = useQueryClient()
-  const entry = api.api.collection[':tmdbId']
+  const movie = useMovie(tmdbId)
   // One mutation for all three buttons, so they're all disabled while any toggle is saving.
-  const toggle = useMutation({
-    mutationFn: (request: () => ReturnType<typeof entry.status.$put> | ReturnType<typeof entry.favourite.$put>) => parseResponse(request()),
-    onSuccess: (state) => {
-      queryClient.setQueryData(['movie', tmdbId], (old: typeof movie.data) => old && { ...old, ...state })
-      queryClient.invalidateQueries({ queryKey: ['collection'] })
-    },
-    onError: () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.'),
-  })
+  const toggle = useSetEntry(tmdbId)
+  const onError = () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.')
   // Pressing the button that's on clears it: the Status drops the movie, the Favourite unmarks it.
-  const toggleStatus = (status: Status) =>
-    toggle.mutate(() => entry.status.$put({ param: { tmdbId }, json: { status: movie.data?.status === status ? null : status } }))
-  const toggleFavourite = () => toggle.mutate(() => entry.favourite.$put({ param: { tmdbId }, json: { favourite: !movie.data?.favourite } }))
+  const toggleStatus = (status: Status) => toggle.mutate({ status: movie.data?.status === status ? null : status }, { onError })
+  const toggleFavourite = () => toggle.mutate({ favourite: !movie.data?.favourite }, { onError })
 
   return (
     <View style={styles.screen}>
