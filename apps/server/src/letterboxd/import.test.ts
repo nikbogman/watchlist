@@ -50,3 +50,12 @@ test('the import needs the right password', async () => {
   expect(res.status).toBe(401)
   expect(await t.db.select().from(collectionEntry)).toEqual([])
 })
+
+test('the import returns 502 when TMDB is down', async () => {
+  const down = fakeTmdb()
+  down.down = true
+  const t = await testApp(down)
+  const res = await t.request('/api/import/letterboxd', { method: 'POST', body: form(PASSWORD) })
+  expect(res.status).toBe(502)
+  expect(await res.json()).toEqual({ error: 'TMDB is unreachable' })
+})

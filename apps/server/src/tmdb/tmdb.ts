@@ -2,11 +2,14 @@ import type { Movie, MovieDetails } from '../movies/movies.js'
 
 const API = 'https://api.themoviedb.org/3'
 
-/** What a TMDB call resolves to when TMDB can't be reached. A symbol, so it can't be mistaken for data. */
-export const UNREACHABLE = Symbol('TMDB unreachable')
+/** What every TMDB call throws when TMDB can't be reached or errors. The app answers it with a 502. */
+export class TmdbUnreachable extends Error {
+  constructor(cause?: unknown) {
+    super('TMDB is unreachable', { cause })
+  }
+}
 
-export const orUnreachable = <T>(call: Promise<T>) => call.catch((): typeof UNREACHABLE => UNREACHABLE)
-
+/** Both calls throw TmdbUnreachable when TMDB can't be reached. */
 export type Tmdb = {
   search(query: string): Promise<Movie[]>
   /** Resolves to null when TMDB doesn't know the id. */
@@ -20,9 +23,11 @@ const yearOf = (date?: string) => (date ? Number(date.slice(0, 4)) : null)
 
 export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch): Tmdb {
   async function get<T>(path: string, params: Record<string, string> = {}): Promise<T | null> {
-    const res = await fetchFn(`${API}${path}?${new URLSearchParams({ ...params, api_key: apiKey })}`)
+    const res = await fetchFn(`${API}${path}?${new URLSearchParams({ ...params, api_key: apiKey })}`).catch((e: unknown) => {
+      throw new TmdbUnreachable(e)
+    })
     if (res.status === 404) return null
-    if (!res.ok) throw new Error(`TMDB ${path} failed with ${res.status}`)
+    if (!res.ok) throw new TmdbUnreachable(new Error(`TMDB ${path} failed with ${res.status}`))
     return res.json() as Promise<T>
   }
 

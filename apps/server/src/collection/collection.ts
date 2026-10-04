@@ -2,7 +2,7 @@ import { and, asc, desc, eq, ilike } from 'drizzle-orm'
 import type { Db } from '../db.js'
 import { toRow } from '../movies/movies.js'
 import { collectionEntry } from '../schema/index.js'
-import { orUnreachable, UNREACHABLE, type Tmdb } from '../tmdb/tmdb.js'
+import type { Tmdb } from '../tmdb/tmdb.js'
 
 export const STATUSES = collectionEntry.status.enumValues
 export type Status = (typeof STATUSES)[number]
@@ -39,10 +39,10 @@ export function createCollection(db: Db, tmdb: Tmdb) {
     return entryOf(entry)
   }
 
-  /** Copies the movie from TMDB once, never refreshed. Resolves to null if TMDB doesn't know the id, or UNREACHABLE. */
+  /** Copies the movie from TMDB once, never refreshed. Resolves to null if TMDB doesn't know the id. */
   async function create(tmdbId: number, entry: Entry) {
-    const movie = await orUnreachable(tmdb.details(tmdbId))
-    if (movie === UNREACHABLE || !movie) return movie
+    const movie = await tmdb.details(tmdbId)
+    if (!movie) return null
     await db.insert(collectionEntry).values({ tmdbId, title: movie.title, year: movie.year, posterPath: movie.posterPath, ...entry })
     return entryOf(entry)
   }

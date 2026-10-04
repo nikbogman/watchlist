@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createTmdbClient } from './tmdb.js'
+import { createTmdbClient, TmdbUnreachable } from './tmdb.js'
 
 const stubFetch = (body: unknown, status = 200) =>
   (async (url: string) => {
@@ -28,7 +28,7 @@ test('search maps TMDB results to poster paths, dropping adult titles', async ()
 })
 
 test('search throws when TMDB errors', async () => {
-  await expect(createTmdbClient('KEY', stubFetch({}, 500)).search('heat')).rejects.toThrow()
+  await expect(createTmdbClient('KEY', stubFetch({}, 500)).search('heat')).rejects.toThrow(TmdbUnreachable)
 })
 
 test('details maps a TMDB movie', async () => {
@@ -51,5 +51,12 @@ test('details returns null for an id TMDB does not know', async () => {
 })
 
 test('details throws when TMDB errors', async () => {
-  await expect(createTmdbClient('KEY', stubFetch({}, 500)).details(1)).rejects.toThrow()
+  await expect(createTmdbClient('KEY', stubFetch({}, 500)).details(1)).rejects.toThrow(TmdbUnreachable)
+})
+
+test('a network failure is TmdbUnreachable too', async () => {
+  const offline = (async () => {
+    throw new TypeError('fetch failed')
+  }) as unknown as typeof fetch
+  await expect(createTmdbClient('KEY', offline).search('heat')).rejects.toThrow(TmdbUnreachable)
 })

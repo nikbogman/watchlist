@@ -7,7 +7,7 @@ import type { Db } from './db.js'
 import { letterboxdRoutes } from './letterboxd/routes.js'
 import { movieRoutes } from './movies/routes.js'
 import { reelRoutes } from './reels/routes.js'
-import type { Tmdb } from './tmdb/tmdb.js'
+import { TmdbUnreachable, type Tmdb } from './tmdb/tmdb.js'
 
 export function createApp(db: Db, tmdb: Tmdb) {
   const auth = createAuth(db)
@@ -17,9 +17,11 @@ export function createApp(db: Db, tmdb: Tmdb) {
   app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
   // Every failure has the same { error } shape; unexpected ones (e.g. the database) are a 500.
-  app.onError((err, c) =>
-    err instanceof HTTPException ? c.json({ error: err.message }, err.status) : c.json({ error: 'Internal error' }, 500),
-  )
+  app.onError((err, c) => {
+    if (err instanceof HTTPException) return c.json({ error: err.message }, err.status)
+    if (err instanceof TmdbUnreachable) return c.json({ error: err.message }, 502)
+    return c.json({ error: 'Internal error' }, 500)
+  })
 
   // Checks the email and password itself, so it sits before the session check.
   app.route('/api/import/letterboxd', letterboxdRoutes(auth, db, tmdb))

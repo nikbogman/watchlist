@@ -8,21 +8,21 @@ import { MIGRATIONS } from '../db.js'
 import * as schema from '../schema/index.js'
 import { seed } from '../auth/seed.js'
 import type { Movie, MovieDetails } from '../movies/movies.js'
-import type { Tmdb } from '../tmdb/tmdb.js'
+import { TmdbUnreachable, type Tmdb } from '../tmdb/tmdb.js'
 
 export const EMAIL = 'me@example.com'
 export const PASSWORD = 'correct horse battery'
 
-/** In-memory stand-in for TMDB. Set `down` to make every call throw. */
+/** In-memory stand-in for TMDB. Set `down` to make every call throw TmdbUnreachable. */
 export function fakeTmdb(movies: (Movie | MovieDetails)[] = []) {
   const fake = {
     down: false as boolean,
     async search(query: string) {
-      if (fake.down) throw new Error('TMDB down')
+      if (fake.down) throw new TmdbUnreachable()
       return movies.filter((m) => m.title.toLowerCase().includes(query.toLowerCase()))
     },
     async details(tmdbId: number) {
-      if (fake.down) throw new Error('TMDB down')
+      if (fake.down) throw new TmdbUnreachable()
       const m = movies.find((m) => m.tmdbId === tmdbId)
       return m ? { overview: '', ...m } : null
     },
