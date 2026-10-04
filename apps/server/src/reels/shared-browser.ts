@@ -1,6 +1,6 @@
 import { chromium, type Browser, type BrowserContextOptions } from 'playwright'
 import type { Db } from '../db.js'
-import { instagramSession } from '../schema/reels.js'
+import { instagramSession } from './schema.js'
 import type { Scrape } from './queue.js'
 import { LOGIN_HINT, scrapeReel } from './scrape-reel.js'
 

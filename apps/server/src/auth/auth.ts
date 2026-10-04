@@ -2,7 +2,7 @@ import { expo } from '@better-auth/expo'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import type { Db } from '../db.js'
-import * as schema from '../schema/index.js'
+import * as schema from '../schema.js'
 
 const DAY = 60 * 60 * 24
 

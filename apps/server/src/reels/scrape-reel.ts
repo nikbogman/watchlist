@@ -1,5 +1,5 @@
 import type { BrowserContext, Response } from 'playwright'
-import type { Comment, Reel } from '../schema/reels.js'
+import type { Comment, Reel } from './schema.js'
 
 export const LOGIN_HINT = 'run `pnpm reel:login` in apps/server'
 

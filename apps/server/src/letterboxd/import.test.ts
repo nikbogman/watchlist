@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { collectionEntry } from '../schema/index.js'
+import { collectionEntry } from '../collection/schema.js'
 import { EMAIL, PASSWORD, fakeTmdb, testApp } from '../test/test-app.js'
 import { parseCsv } from './import.js'
 

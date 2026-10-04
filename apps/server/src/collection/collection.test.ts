@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { PAGE_SIZE, type Status } from './collection.js'
-import { collectionEntry } from '../schema/index.js'
+import { collectionEntry } from './schema.js'
 import { fakeTmdb, testApp } from '../test/test-app.js'
 
 const heat = { tmdbId: 3, title: 'Heat', year: 1995, posterPath: '/heat.jpg' }

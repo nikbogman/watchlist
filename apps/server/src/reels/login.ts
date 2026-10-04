@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import { chromium } from 'playwright'
 import { createDb } from '../db.js'
-import { instagramSession } from '../schema/reels.js'
+import { instagramSession } from './schema.js'
 
 // Saves the Instagram session the scraper uses. Pass a storage-state JSON file to import it instead of logging in.
 if (!process.env.DATABASE_URL) throw new Error('Set DATABASE_URL')
