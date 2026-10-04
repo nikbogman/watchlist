@@ -28,8 +28,12 @@ const watched = (current: Entry | undefined, now: Date, favourite = false): Entr
   favourite,
 })
 
+const byId = (tmdbId: number) => eq(collectionEntry.tmdbId, tmdbId)
+
+// The movie is copied in once, never refreshed.
+const rowOf = ({ tmdbId, title, year, posterPath }: Movie, entry: Entry) => ({ tmdbId, title, year, posterPath, ...entry })
+
 export function createCollection(db: Db, tmdb: Tmdb) {
-  const byId = (tmdbId: number) => eq(collectionEntry.tmdbId, tmdbId)
   const find = (tmdbId: number) => db.query.collectionEntry.findFirst({ where: byId(tmdbId) })
 
   async function drop(tmdbId: number) {
@@ -41,9 +45,6 @@ export function createCollection(db: Db, tmdb: Tmdb) {
     await db.update(collectionEntry).set(entry).where(byId(tmdbId))
     return entryOf(entry)
   }
-
-  // The movie is copied in once, never refreshed.
-  const rowOf = ({ tmdbId, title, year, posterPath }: Movie, entry: Entry) => ({ tmdbId, title, year, posterPath, ...entry })
 
   /** Resolves to null if TMDB doesn't know the id. */
   async function create(tmdbId: number, entry: Entry) {

@@ -50,6 +50,6 @@ test('re-seeding changes the password and ends old sessions', async () => {
 })
 
 test('seed refuses a second account', async () => {
-  await expect(seed(createAuth(t.db), 'other@example.com', PASSWORD)).rejects.toThrow()
+  await expect(seed(createAuth(t.db), 'other@example.com', PASSWORD)).rejects.toThrow('Another account already exists')
   expect((await t.post('/api/auth/sign-in/email', { email: 'other@example.com', password: PASSWORD })).ok).toBe(false)
 })

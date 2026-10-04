@@ -21,7 +21,7 @@ export async function createDb(url: string, attempts = 10) {
     } catch (e) {
       const { code } = ((e as { cause?: unknown }).cause ?? e) as { code?: string }
       if (!code || !TRANSIENT.has(code)) throw e
-      if (attempt === attempts) throw new Error(`Database unreachable after ${attempts} attempts (${code})`)
+      if (attempt === attempts) throw new Error(`Database unreachable after ${attempts} attempts (${code})`, { cause: e })
       const delay = Math.min(1000 * 2 ** (attempt - 1), 15_000)
       console.warn(`Database unreachable (${code}), retrying in ${delay / 1000}s [${attempt}/${attempts}]`)
       await setTimeout(delay)

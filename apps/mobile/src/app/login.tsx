@@ -16,9 +16,9 @@ export default function Login() {
     setPending(true)
     setError(undefined)
     // On success the session updates and the root layout's guard swaps in the tabs.
-    const { error } = await authClient.signIn.email({ email: email.trim(), password })
+    const { error: failure } = await authClient.signIn.email({ email: email.trim(), password })
     setPending(false)
-    if (error) setError(error.status === 401 ? 'Wrong email or password.' : (error.message ?? "Couldn't log in."))
+    if (failure) setError(failure.status === 401 ? 'Wrong email or password.' : (failure.message ?? "Couldn't log in."))
   }
 
   return (

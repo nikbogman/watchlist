@@ -18,6 +18,14 @@ export type Tmdb = {
 
 type TmdbMovie = { id: number; title: string; release_date?: string; poster_path: string | null; adult?: boolean; overview?: string }
 
+// Network errors, error statuses and bodies that aren't what TMDB documents all mean TMDB can't serve us.
+const unreachable =
+  <A extends unknown[], R>(call: (...args: A) => Promise<R>) =>
+  (...args: A) =>
+    call(...args).catch((e: unknown) => {
+      throw e instanceof TmdbUnreachable ? e : new TmdbUnreachable(e)
+    })
+
 // TMDB sends "" for an unknown release date.
 const yearOf = (date?: string) => (date ? Number(date.slice(0, 4)) : null)
 
@@ -28,12 +36,6 @@ export function createTmdbClient(apiKey: string, fetchFn: typeof fetch = fetch):
     if (!res.ok) throw new Error(`TMDB ${path} failed with ${res.status}`)
     return res.json() as Promise<T>
   }
-
-  // Network errors, error statuses and bodies that aren't what TMDB documents all mean TMDB can't serve us.
-  const unreachable = <A extends unknown[], R>(call: (...args: A) => Promise<R>) =>
-    (...args: A) => call(...args).catch((e: unknown) => {
-      throw e instanceof TmdbUnreachable ? e : new TmdbUnreachable(e)
-    })
 
   return {
     search: unreachable(async (query: string) => {

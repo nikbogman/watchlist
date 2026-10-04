@@ -17,7 +17,10 @@ function parseLine(line: string) {
     const c = line[i];
     if (quoted && c === '"' && line[i + 1] === '"') cell += line[i++];
     else if (c === '"') quoted = !quoted;
-    else if (c === "," && !quoted) (cells.push(cell), (cell = ""));
+    else if (c === "," && !quoted) {
+      cells.push(cell);
+      cell = "";
+    }
     else cell += c;
   }
   return [...cells, cell];
