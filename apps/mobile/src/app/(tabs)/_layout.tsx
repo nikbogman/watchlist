@@ -1,9 +1,11 @@
-import { Tabs } from 'expo-router'
-import type { ReactNode } from 'react'
-import type { ColorValue } from 'react-native'
+import { router, Tabs } from 'expo-router'
+import { useShareIntentContext } from 'expo-share-intent'
+import { useEffect, type ReactNode } from 'react'
+import { Alert, type ColorValue } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle, Path } from 'react-native-svg'
 
+import { inProgress, useRequests, useShareReel } from '@/reels'
 import { colors, fonts } from '@/theme'
 
 function Icon({ color, children }: { color: ColorValue; children: ReactNode }) {
@@ -26,6 +28,8 @@ function Icon({ color, children }: { color: ColorValue; children: ReactNode }) {
 export default function TabsLayout() {
   // Design: 62px of content over 22px of bottom padding; system nav buttons get at least that.
   const bottom = Math.max(useSafeAreaInsets().bottom, 22)
+  const busy = useRequests().data?.some(inProgress)
+  useSharedReels()
   return (
     // History, so back from the movie page returns to the tab it was opened from.
     <Tabs
@@ -90,8 +94,41 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: 'Requests',
+          // An empty badge is a dot: some reel is still being identified.
+          tabBarBadge: busy ? '' : undefined,
+          tabBarAccessibilityLabel: busy ? 'Requests, some in progress' : 'Requests',
+          tabBarBadgeStyle: { minWidth: 9, maxHeight: 9, borderRadius: 5, backgroundColor: colors.accent },
+          tabBarIcon: ({ color }) => (
+            <Icon color={color}>
+              <Path d="M4 13l2.5-8h11L20 13v6H4z" />
+              <Path d="M4 13h4.5l1 2.5h5l1-2.5H20" />
+            </Icon>
+          ),
+        }}
+      />
       {/* Inside the tabs, not the root stack, so the tab bar stays visible on it. */}
       <Tabs.Screen name="movie/[tmdbId]" options={{ href: null }} />
     </Tabs>
   )
+}
+
+/**
+ * Sends a reel shared to the app from Instagram, then shows Requests.
+ * Lives here, behind the sign-in guard: a reel shared while signed out waits for sign-in, and is dropped if you leave the app first.
+ */
+function useSharedReels() {
+  const { hasShareIntent, shareIntent, resetShareIntent } = useShareIntentContext()
+  const { mutate } = useShareReel()
+  useEffect(() => {
+    if (!hasShareIntent) return
+    const url = shareIntent.webUrl ?? shareIntent.text
+    resetShareIntent()
+    if (!url) return
+    mutate(url, { onError: () => Alert.alert("Couldn't send the reel", 'Only Instagram reels and posts can be shared.') })
+    router.navigate('/requests')
+  }, [hasShareIntent, shareIntent, resetShareIntent, mutate])
 }
