@@ -1,11 +1,9 @@
 import { setTimeout } from 'node:timers/promises'
 import { eq, sql } from 'drizzle-orm'
 import type { Db } from '../db.js'
-import { reelScrape } from '../schema/reels.js'
+import { reelScrape, type Reel } from '../schema/reels.js'
 
-/** createdAt is an ISO date string, so a reel reads back from the jsonb column unchanged. */
-export type Comment = { author: string; text: string; likes: number; createdAt: string }
-export type Reel = { url: string; description: string | null; comments: Comment[] }
+/** Scrapes one reel. The queue's only dependency on a browser. */
 export type Scrape = (url: string) => Promise<Reel>
 
 const REEL_URL = /^https:\/\/(www\.)?instagram\.com\/([\w.]+\/)?(reels?|p)\/(?<shortcode>[\w-]+)/
@@ -15,12 +13,18 @@ export function shortcodeOf(url: string) {
   return REEL_URL.exec(url)?.groups?.shortcode
 }
 
+/** Queues a scrape. Resolves to its id, or null when the URL isn't an Instagram reel or post. */
 export async function enqueue(db: Db, url: string) {
+  if (!shortcodeOf(url)) return null
   const [job] = await db.insert(reelScrape).values({ url }).returning({ id: reelScrape.id })
   return job!.id
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** The scrape's status and, once done or failed, its reel or error. Null for an unknown id. */
 export async function getJob(db: Db, id: string) {
+  if (!UUID.test(id)) return null
   const [job] = await db
     .select({ status: reelScrape.status, reel: reelScrape.reel, error: reelScrape.error })
     .from(reelScrape)

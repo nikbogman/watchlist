@@ -1,5 +1,6 @@
 import type { BrowserContext, Response } from 'playwright'
-import { shortcodeOf, type Comment, type Reel } from './queue.js'
+import type { Comment, Reel } from '../schema/reels.js'
+import { shortcodeOf } from './queue.js'
 
 export const LOGIN_HINT = 'run `pnpm reel:login` in apps/server'
 

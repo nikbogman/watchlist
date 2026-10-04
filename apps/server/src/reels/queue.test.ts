@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { testApp } from '../test/test-app.js'
-import { runNext, type Reel } from './queue.js'
+import type { Reel } from '../schema/reels.js'
+import { runNext } from './queue.js'
 
 const URL = 'https://www.instagram.com/reel/DNBbfSkMPuy/'
 const REEL: Reel = {

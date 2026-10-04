@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
 import { createDb } from './db.js'
 import { startWorker } from './reels/queue.js'
-import { scrapeWithSharedBrowser } from './reels/worker.js'
+import { scrapeWithSharedBrowser } from './reels/shared-browser.js'
 import { createTmdbClient } from './tmdb/tmdb.js'
 
 if (!process.env.TMDB_API_KEY) throw new Error('Set TMDB_API_KEY')

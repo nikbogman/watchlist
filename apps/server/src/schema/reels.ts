@@ -1,6 +1,9 @@
 import { sql } from "drizzle-orm";
 import { pgTable, text, integer, jsonb, timestamp, uuid, check } from "drizzle-orm/pg-core";
-import type { Reel } from "../reels/queue.js";
+
+/** createdAt is an ISO date string, so a reel reads back from the jsonb column unchanged. */
+export type Comment = { author: string; text: string; likes: number; createdAt: string };
+export type Reel = { url: string; description: string | null; comments: Comment[] };
 
 // The reel scrape queue: each row is a job and, once done, its result.
 export const reelScrape = pgTable(
