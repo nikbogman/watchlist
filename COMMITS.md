@@ -35,6 +35,7 @@ The part of the workspace the commit touches:
 |---|---|
 | `mobile` | `apps/mobile` |
 | `server` | `apps/server` |
+| `reel-scraper` | `packages/reel-scraper` |
 | `repo` | Root config, workspace setup, and agent tooling (`.claude/`, `.mcp.json`) |
 
 Leave out the scope if a commit spans both apps. Split the commit instead when the changes are unrelated.

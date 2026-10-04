@@ -1,0 +1,24 @@
+{
+  "name": "@watcher/reel-scraper",
+  "private": true,
+  "type": "module",
+  "exports": "./src/scrape-reel.ts",
+  "scripts": {
+    "reel": "tsx src/scrape-reel.ts",
+    "reel:login": "playwright install chromium && tsx src/login.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

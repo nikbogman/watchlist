@@ -1,6 +1,6 @@
 # Watcher
 
-pnpm workspace: `apps/mobile` (Expo, see [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md)) and `apps/server` (Hono + Drizzle + libSQL + Better Auth).
+pnpm workspace: `apps/mobile` (Expo, see [apps/mobile/AGENTS.md](apps/mobile/AGENTS.md)), `apps/server` (Hono + Drizzle + libSQL + Better Auth) and `packages/reel-scraper` (Playwright Instagram reel scraper, a prototype of a future server module).
 
 - Domain terms: [CONTEXT.md](CONTEXT.md). Specs: GitHub issues, one per feature (Movie lists is #1).
 - Commit messages follow [COMMITS.md](COMMITS.md).
