@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Login</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=Instrument+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0;background:#16140F}
+a{color:#E8A33D}a:hover{color:#F2B85A}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; padding: 0 28px 56px; display: flex; flex-direction: column; justify-content: flex-end; gap: 40px; background: #16140F; color: #F2EDE3; font-family: 'Instrument Sans', sans-serif; overflow: hidden">
+<img src="/_blob/455c06e7af6e69c7bdbde9b4aaa3abc6" alt="" style="position: absolute; top: -135px; right: -160px; width: 560px; height: 560px">
+<div style="position: relative; display: flex; flex-direction: column; gap: 8px">
+<h1 style="margin: 0; line-height: 0"><img src="/_blob/a4012e2185fce7f91a6b7a0ebe5c4279" alt="popcorn" style="width: 250px; height: auto"></h1>
+<p style="margin: 0; font-size: 16px; color: #A39B8C">Your private movie log.</p>
+</div>
+<form style="position: relative; display: flex; flex-direction: column; gap: 20px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="email" style="font-size: 13px; font-weight: 500; color: #A39B8C">Email</label>
+<input id="email" type="email" value="you@example.com" style="height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1px solid #3A352C; background: #221F19; color: #F2EDE3; font-family: inherit; font-size: 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<label for="password" style="font-size: 13px; font-weight: 500; color: #A39B8C">Password</label>
+<input id="password" type="password" value="password123" style="height: 52px; box-sizing: border-box; padding: 0 16px; border-radius: 12px; border: 1px solid #3A352C; background: #221F19; color: #F2EDE3; font-family: inherit; font-size: 16px">
+</div>
+<button type="button" style="height: 52px; margin-top: 8px; border: none; border-radius: 12px; background: #E8A33D; color: #16140F; font-family: inherit; font-size: 16px; font-weight: 600">Log in</button>
+</form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
