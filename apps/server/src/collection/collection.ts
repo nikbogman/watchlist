@@ -56,49 +56,27 @@ export function createCollection(db: Db, tmdb: Tmdb) {
 
   // The Status and Favourite rules from CONTEXT.md. Database errors throw.
   return {
-    entry: async (tmdbId: number) => entryOf(await find(tmdbId)),
+    async entry(tmdbId: number) {
+      return entryOf(await find(tmdbId))
+    },
 
     /** Null drops the entry. */
     async setStatus(tmdbId: number, status: Status | null) {
-      if (status === null) {
-        return drop(tmdbId)
-      }
-
+      if (status === null) return drop(tmdbId)
       const current = await find(tmdbId)
-      if (current?.status === status) {
-        return entryOf(current)
-      }
-
-      let next: Entry
-      if (status === 'to_watch') {
-        next = toWatch(new Date())
-      } else {
-        next = watched(current, new Date())
-      }
-
-      if (current) {
-        return update(tmdbId, next)
-      }
-      return create(tmdbId, next)
+      if (current?.status === status) return entryOf(current)
+      const next = status === 'to_watch' ? toWatch(new Date()) : watched(current, new Date())
+      return current ? update(tmdbId, next) : create(tmdbId, next)
     },
 
     async setFavourite(tmdbId: number, favourite: boolean) {
       const current = await find(tmdbId)
-      if (current?.status === 'watched') {
-        return update(tmdbId, { ...current, favourite })
-      }
-
+      if (current?.status === 'watched') return update(tmdbId, { ...current, favourite })
       // Not Watched, so there is no Favourite to clear.
-      if (!favourite) {
-        return entryOf(current)
-      }
-
+      if (!favourite) return entryOf(current)
       // Favouriting a movie that isn't Watched marks it Watched.
       const next = watched(current, new Date(), true)
-      if (current) {
-        return update(tmdbId, next)
-      }
-      return create(tmdbId, next)
+      return current ? update(tmdbId, next) : create(tmdbId, next)
     },
 
     /** Adds movies with the dates they came with. Movies already in the collection are left alone. Resolves to how many were added. */
@@ -124,19 +102,9 @@ export function createCollection(db: Db, tmdb: Tmdb) {
      * `total` counts the whole list, `matching` only the titles containing `title`.
      */
     async list(filter: Filter, { title = '', oldestFirst = false, offset = 0 }: Page = {}) {
-      let where
-      let date
-      if ('favourite' in filter) {
-        where = eq(collectionEntry.favourite, true)
-        date = collectionEntry.watchedAt
-      } else if (filter.status === 'to_watch') {
-        where = eq(collectionEntry.status, filter.status)
-        date = collectionEntry.addedAt
-      } else {
-        where = eq(collectionEntry.status, filter.status)
-        date = collectionEntry.watchedAt
-      }
-
+      const where = 'favourite' in filter ? eq(collectionEntry.favourite, true) : eq(collectionEntry.status, filter.status)
+      // To watch sorts by when a movie was added, Watched and Favourites by when it was watched.
+      const date = 'status' in filter && filter.status === 'to_watch' ? collectionEntry.addedAt : collectionEntry.watchedAt
       const direction = oldestFirst ? asc : desc
       const search = title ? and(where, ilike(collectionEntry.title, `%${title.replace(/[\\%_]/g, '\\$&')}%`)) : where
       const [entries, total, matching] = await Promise.all([
