@@ -5,9 +5,10 @@ import { enqueue, getJob } from './queue.js'
 
 const NOT_A_REEL = { error: 'url must be an Instagram reel or post URL' }
 
-const reelUrl = validator('json', (body, c) => {
+// enqueue decides what a reel URL is; this only narrows the body's type.
+const reelUrl = validator('json', (body) => {
   const { url } = body as { url?: unknown }
-  return typeof url === 'string' ? { url } : c.json(NOT_A_REEL, 400)
+  return { url: typeof url === 'string' ? url : '' }
 })
 
 /** POST a reel URL to queue a scrape, then poll GET /:id until its status is done or failed. */

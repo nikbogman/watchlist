@@ -2,16 +2,10 @@ import { setTimeout } from 'node:timers/promises'
 import { eq, sql } from 'drizzle-orm'
 import type { Db } from '../db.js'
 import { reelScrape, type Reel } from '../schema/reels.js'
+import { shortcodeOf } from './scrape-reel.js'
 
 /** Scrapes one reel. The queue's only dependency on a browser. */
 export type Scrape = (url: string) => Promise<Reel>
-
-const REEL_URL = /^https:\/\/(www\.)?instagram\.com\/([\w.]+\/)?(reels?|p)\/(?<shortcode>[\w-]+)/
-
-/** The reel's shortcode, or undefined when the URL isn't an Instagram reel or post. */
-export function shortcodeOf(url: string) {
-  return REEL_URL.exec(url)?.groups?.shortcode
-}
 
 /** Queues a scrape. Resolves to its id, or null when the URL isn't an Instagram reel or post. */
 export async function enqueue(db: Db, url: string) {
@@ -32,7 +26,7 @@ export async function getJob(db: Db, id: string) {
   return job ?? null
 }
 
-/** Claims the oldest queued job and runs it. False when the queue is empty. */
+/** One worker step, exported for tests: claims the oldest queued job and runs it. False when the queue is empty. */
 export async function runNext(db: Db, scrape: Scrape) {
   const [job] = await db
     .update(reelScrape)

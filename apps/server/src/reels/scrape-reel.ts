@@ -1,8 +1,14 @@
 import type { BrowserContext, Response } from 'playwright'
 import type { Comment, Reel } from '../schema/reels.js'
-import { shortcodeOf } from './queue.js'
 
 export const LOGIN_HINT = 'run `pnpm reel:login` in apps/server'
+
+const REEL_URL = /^https:\/\/(www\.)?instagram\.com\/([\w.]+\/)?(reels?|p)\/(?<shortcode>[\w-]+)/
+
+/** The reel's shortcode, or undefined when the URL isn't an Instagram reel or post. */
+export function shortcodeOf(url: string) {
+  return REEL_URL.exec(url)?.groups?.shortcode
+}
 
 /** Scrapes in a new page of the given context, which must hold a logged-in Instagram session. */
 export async function scrapeReel(context: BrowserContext, url: string, opts: { maxComments?: number } = {}): Promise<Reel> {
