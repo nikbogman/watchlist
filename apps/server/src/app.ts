@@ -3,8 +3,8 @@ import { HTTPException } from 'hono/http-exception'
 import { createAuth } from './auth/auth'
 import { createCollection } from './collection/collection'
 import { collectionRoutes } from './collection/routes'
+import { csvRoutes } from './csv/routes'
 import type { Db } from './db'
-import { letterboxdRoutes } from './letterboxd/routes'
 import { movieRoutes } from './movies/routes'
 import { createReelQueue } from './reels/queue'
 import { reelRoutes } from './reels/routes'
@@ -24,9 +24,6 @@ export function createApp(db: Db, tmdb: Tmdb) {
     return c.json({ error: 'Internal error' }, 500)
   })
 
-  // Checks the email and password itself, so it sits before the session check.
-  app.route('/api/import/letterboxd', letterboxdRoutes(auth, collection, tmdb))
-
   app.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers })
     if (!session) return c.json({ error: 'Unauthorized' }, 401)
@@ -36,6 +33,7 @@ export function createApp(db: Db, tmdb: Tmdb) {
   return app
     .route('/api', movieRoutes(tmdb, collection))
     .route('/api/collection', collectionRoutes(collection))
+    .route('/api/collection', csvRoutes(collection, tmdb))
     .route('/api/reels', reelRoutes(createReelQueue(db)))
 }
 

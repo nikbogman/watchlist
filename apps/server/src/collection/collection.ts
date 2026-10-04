@@ -97,6 +97,11 @@ export function createCollection(db: Db, tmdb: Tmdb) {
       return added
     },
 
+    /** Every entry, oldest added first. */
+    async all() {
+      return db.select().from(collectionEntry).orderBy(asc(collectionEntry.addedAt), asc(collectionEntry.tmdbId))
+    },
+
     /**
      * To watch and Watched filter by Status, Favourites by Favourite. Newest first unless oldestFirst.
      * `total` counts the whole list, `matching` only the titles containing `title`.
