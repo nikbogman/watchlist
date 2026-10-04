@@ -1,7 +1,7 @@
 import { serve } from '@hono/node-server'
 import { createApp } from './app.js'
 import { createDb } from './db.js'
-import { startWorker } from './reels/queue.js'
+import { createReelQueue } from './reels/queue.js'
 import { scrapeWithSharedBrowser } from './reels/shared-browser.js'
 import { createTmdbClient } from './tmdb/tmdb.js'
 
@@ -13,7 +13,7 @@ const db = await createDb(process.env.DATABASE_URL).catch((e: Error) => {
   console.error(`Failed to start: ${e.message}${cause}`)
   process.exit(1)
 })
-void startWorker(db, scrapeWithSharedBrowser(db))
+void createReelQueue(db).work(scrapeWithSharedBrowser(db))
 const app = createApp(db, createTmdbClient(process.env.TMDB_API_KEY))
 
 // 0.0.0.0 so a phone running Expo Go can reach it over the LAN.

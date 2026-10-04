@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { testApp } from '../test/test-app.js'
 import type { Reel } from './schema.js'
-import { runNext } from './queue.js'
+import { createReelQueue } from './queue.js'
 
 const URL = 'https://www.instagram.com/reel/DNBbfSkMPuy/'
 const REEL: Reel = {
@@ -15,7 +15,8 @@ async function setup() {
   const cookie = await t.login()
   const enqueue = async (url = URL) => (await (await t.post('/api/reels', { url }, cookie)).json()).id as string
   const poll = async (id: string) => (await t.request(`/api/reels/${id}`, { cookie })).json()
-  return { ...t, cookie, enqueue, poll }
+  const { runNext } = createReelQueue(t.db)
+  return { ...t, cookie, enqueue, poll, runNext }
 }
 
 describe('reel scrape queue', () => {
@@ -33,22 +34,22 @@ describe('reel scrape queue', () => {
   })
 
   test('queues a reel, then a worker run stores its scrape', async () => {
-    const { db, enqueue, poll } = await setup()
+    const { runNext, enqueue, poll } = await setup()
     const id = await enqueue()
     expect(await poll(id)).toEqual({ status: 'queued', reel: null, error: null })
 
     const scraped: string[] = []
-    expect(await runNext(db, async (url) => (scraped.push(url), REEL))).toBe(true)
+    expect(await runNext(async (url) => (scraped.push(url), REEL))).toBe(true)
 
     expect(scraped).toEqual([URL])
     expect(await poll(id)).toEqual({ status: 'done', reel: REEL, error: null })
   })
 
   test('records why a scrape failed', async () => {
-    const { db, enqueue, poll } = await setup()
+    const { runNext, enqueue, poll } = await setup()
     const id = await enqueue()
 
-    await runNext(db, async () => {
+    await runNext(async () => {
       throw new Error('Instagram session expired')
     })
 
@@ -56,16 +57,16 @@ describe('reel scrape queue', () => {
   })
 
   test('runs jobs oldest first, one per run, and reports an empty queue', async () => {
-    const { db, enqueue, poll } = await setup()
+    const { runNext, enqueue, poll } = await setup()
     const first = await enqueue('https://www.instagram.com/p/first/')
     const second = await enqueue('https://www.instagram.com/p/second/')
 
     const scraped: string[] = []
     const scrape = async (url: string) => (scraped.push(url), { ...REEL, url })
-    await runNext(db, scrape)
+    await runNext(scrape)
     expect((await poll(second)).status).toBe('queued')
-    await runNext(db, scrape)
-    expect(await runNext(db, scrape)).toBe(false)
+    await runNext(scrape)
+    expect(await runNext(scrape)).toBe(false)
 
     expect(scraped).toEqual(['https://www.instagram.com/p/first/', 'https://www.instagram.com/p/second/'])
     expect((await poll(first)).status).toBe('done')
