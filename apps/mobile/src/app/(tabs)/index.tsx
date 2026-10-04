@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 
-import { useSearch } from '@/collection'
+import { useSearch } from '@/movies'
 import { MovieRow } from '@/components/movie-row'
 import { SearchField } from '@/components/search-field'
 import { ScreenHeader } from '@/components/screen-header'
@@ -10,7 +10,7 @@ import { useDebounced } from '@/use-debounced'
 
 export default function Search() {
   const [text, setText] = useState('')
-  const q = useDebounced(text.trim())
+  const q = useDebounced(text.trim(), 300)
   const search = useSearch(q)
 
   return (

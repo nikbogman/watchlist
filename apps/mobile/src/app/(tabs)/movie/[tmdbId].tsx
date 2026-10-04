@@ -13,11 +13,10 @@ export default function Movie() {
   const { top } = useSafeAreaInsets()
   const movie = useMovie(tmdbId)
   // One mutation for all three buttons, so they're all disabled while any toggle is saving.
-  const toggle = useSetEntry(tmdbId)
-  const onError = () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.')
+  const toggle = useSetEntry(tmdbId, { onError: () => Alert.alert("Couldn't save", 'Nothing was changed. Try again in a moment.') })
   // Pressing the button that's on clears it: the Status drops the movie, the Favourite unmarks it.
-  const toggleStatus = (status: Status) => toggle.mutate({ status: movie.data?.status === status ? null : status }, { onError })
-  const toggleFavourite = () => toggle.mutate({ favourite: !movie.data?.favourite }, { onError })
+  const toggleStatus = (status: Status) => toggle.mutate({ status: movie.data?.status === status ? null : status })
+  const toggleFavourite = () => toggle.mutate({ favourite: !movie.data?.favourite })
 
   return (
     <View style={styles.screen}>

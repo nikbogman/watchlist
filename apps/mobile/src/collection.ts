@@ -6,26 +6,17 @@ import { api, parseResponse } from '@/api'
 // Types come from the API's responses, so the app depends on the contract rather than the server's internals.
 const movieEndpoint = api.api.movies[':tmdbId'].$get
 const entryEndpoint = api.api.collection[':tmdbId']
-export type MovieSummary = InferResponseType<typeof api.api.search.$get, 200>[number]
 export type Status = NonNullable<InferResponseType<typeof movieEndpoint, 200>['status']>
 /** To watch and Watched are the Collection filtered by Status, Favourites by Favourite. */
 export type Filter = { status: Status } | { favourite: true }
+/** `title` filters by title; newest first unless oldestFirst. */
+export type Page = { title: string; oldestFirst: boolean }
 
 // Every query key lives here, so cache updates can't miss one.
 const keys = {
   movie: (tmdbId: string) => ['movie', tmdbId] as const,
   lists: ['collection'] as const,
-  list: (filter: Filter, title: string, oldestFirst: boolean) => ['collection', filter, title, oldestFirst] as const,
-  search: (q: string) => ['search', q] as const,
-}
-
-/** TMDB search, idle while q is empty. */
-export function useSearch(q: string) {
-  return useQuery({
-    queryKey: keys.search(q),
-    queryFn: () => parseResponse(api.api.search.$get({ query: { q } })),
-    enabled: q.length > 0,
-  })
+  list: (filter: Filter, page: Page) => ['collection', filter, page] as const,
 }
 
 /** A movie with its Entry: Status, Favourite and Watched date. */
@@ -36,16 +27,17 @@ export function useMovie(tmdbId: string) {
   })
 }
 
-type Change = { status: Status | null } | { favourite: boolean }
+type EntryChange = { status: Status | null } | { favourite: boolean }
 
 /**
  * Sets a movie's Status (null drops it) or Favourite. One mutation for both, so callers can block every change while one saves.
  * On success the movie shows the server's Entry and every Collection list reloads.
+ * onError sits on the mutation, not on mutate, so it still fires if the screen unmounts mid-save.
  */
-export function useSetEntry(tmdbId: string) {
+export function useSetEntry(tmdbId: string, { onError }: { onError: () => void }) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (change: Change) =>
+    mutationFn: (change: EntryChange) =>
       parseResponse(
         'status' in change
           ? entryEndpoint.status.$put({ param: { tmdbId }, json: change })
@@ -55,20 +47,21 @@ export function useSetEntry(tmdbId: string) {
       queryClient.setQueryData(keys.movie(tmdbId), (old: InferResponseType<typeof movieEndpoint, 200> | undefined) => old && { ...old, ...entry })
       queryClient.invalidateQueries({ queryKey: keys.lists })
     },
+    onError,
   })
 }
 
-/** A Collection list, a page at a time. `title` filters by title; newest first unless oldestFirst. */
-export function useCollectionList(filter: Filter, { title, oldestFirst }: { title: string; oldestFirst: boolean }) {
+/** A Collection list, a page at a time. */
+export function useCollectionList(filter: Filter, page: Page) {
   return useInfiniteQuery({
-    queryKey: keys.list(filter, title, oldestFirst),
+    queryKey: keys.list(filter, page),
     queryFn: ({ pageParam }) =>
       parseResponse(
         api.api.collection.$get({
           query: {
             ...('status' in filter ? { status: filter.status } : { favourite: 'true' }),
-            title,
-            order: oldestFirst ? 'oldest' : 'newest',
+            title: page.title,
+            order: page.oldestFirst ? 'oldest' : 'newest',
             offset: String(pageParam),
           },
         }),

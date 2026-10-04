@@ -13,7 +13,7 @@ import { useDebounced } from '@/use-debounced'
 export function CollectionList({ title, filter, empty }: { title: string; filter: Filter; empty: string }) {
   const [text, setText] = useState('')
   const [oldestFirst, setOldestFirst] = useState(false)
-  const titleSearch = useDebounced(text.trim())
+  const titleSearch = useDebounced(text.trim(), 250)
   const list = useCollectionList(filter, { title: titleSearch, oldestFirst })
 
   const first = list.data?.pages[0]
